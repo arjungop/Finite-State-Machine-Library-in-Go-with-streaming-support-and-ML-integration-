@@ -1,31 +1,32 @@
+// Package main demonstrates advanced autonomous order processing using FSM
 package main
 
 import (
-	"fmt"
-	"log"
-	"math/rand"
-	"time"
+	"fmt"      // Standard library for formatted I/O operations
+	"log"      // Standard library for logging functionality
+	"math/rand" // Standard library for random number generation
+	"time"     // Standard library for time operations and delays
 
-	"github.com/fla/self-programming-ai/pkg/fsm"
+	"github.com/fla/self-programming-ai/pkg/fsm" // Import the FSM framework
 )
 
-// Define state and event types
-type State string
-type Event string
+// Define state and event types for type safety and code clarity
+type State string // Custom type for FSM states to prevent mixing with regular strings
+type Event string // Custom type for FSM events to prevent mixing with regular strings
 
-// Order processing states
+// Order processing states - defines all possible states in the order lifecycle
 const (
-	Pending    State = "pending"
-	Validating State = "validating"
-	Validated  State = "validated"
-	Processing State = "processing"
-	Paid       State = "paid"
-	Packaging  State = "packaging"
-	Packaged   State = "packaged"
-	Shipping   State = "shipping"
-	Delivered  State = "delivered"
-	Cancelled  State = "cancelled"
-	Refunded   State = "refunded"
+	Pending    State = "pending"    // Initial state when order is first created
+	Validating State = "validating" // State during order validation process
+	Validated  State = "validated"  // State after successful validation
+	Processing State = "processing" // State during payment processing
+	Paid       State = "paid"       // State after successful payment
+	Packaging  State = "packaging"  // State during order packaging
+	Packaged   State = "packaged"   // State after packaging is complete
+	Shipping   State = "shipping"   // State during shipment
+	Delivered  State = "delivered"  // Final successful state - order delivered
+	Cancelled  State = "cancelled"  // State when order is cancelled
+	Refunded   State = "refunded"   // State when order is refunded
 )
 
 // Order processing events
@@ -218,6 +219,13 @@ func (op *OrderProcessor) ProcessOrder() error {
 	// Package the order
 	if _, err := op.machine.SendEvent(fsm.Event(PackageOrder)); err != nil {
 		return fmt.Errorf("failed to package order: %w", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Complete packaging
+	if _, err := op.machine.SendEvent(fsm.Event(PackageOrder)); err != nil {
+		return fmt.Errorf("failed to complete packaging: %w", err)
 	}
 
 	time.Sleep(100 * time.Millisecond)

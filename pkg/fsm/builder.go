@@ -1,142 +1,155 @@
+// Package fsm provides finite state machine implementation with builder pattern
 package fsm
 
-import "fmt"
+import "fmt" // Standard library for string formatting and error messages
 
 // FSMBuilder implements the Builder interface for fluent FSM construction
+// This struct provides a chainable API for constructing finite state machines
 type FSMBuilder struct {
-	machine      *StateMachine
-	initialState State
+	machine      *StateMachine // The state machine being constructed
+	initialState State         // The state this FSM will start in when initialized
 }
 
 // NewBuilder creates a new FSM builder
+// Factory function that returns a ready-to-use builder for constructing FSMs
 func NewBuilder() Builder {
 	return &FSMBuilder{
-		machine: NewStateMachine(),
+		machine: NewStateMachine(), // Create empty state machine to be configured
 	}
 }
 
 // AddState adds a single state to the FSM
+// This method adds one state to the set of valid states and returns the builder for chaining
 func (b *FSMBuilder) AddState(state State) Builder {
-	b.machine.AddState(state)
-	return b
+	b.machine.AddState(state) // Register the state in the underlying state machine
+	return b                  // Return builder to enable method chaining
 }
 
 // AddStates adds multiple states to the FSM
+// Convenience method that accepts variadic parameters to add many states at once
 func (b *FSMBuilder) AddStates(states ...State) Builder {
-	for _, state := range states {
-		b.machine.AddState(state)
+	for _, state := range states { // Iterate through all provided states
+		b.machine.AddState(state) // Add each state to the underlying state machine
 	}
-	return b
+	return b // Return builder to enable method chaining
 }
 
 // AddEvent adds a single event to the FSM
+// This method adds one event to the set of valid events that can trigger transitions
 func (b *FSMBuilder) AddEvent(event Event) Builder {
-	b.machine.AddEvent(event)
-	return b
+	b.machine.AddEvent(event) // Register the event in the underlying state machine
+	return b                  // Return builder to enable method chaining
 }
 
 // AddEvents adds multiple events to the FSM
+// Convenience method that accepts variadic parameters to add many events at once
 func (b *FSMBuilder) AddEvents(events ...Event) Builder {
-	for _, event := range events {
-		b.machine.AddEvent(event)
+	for _, event := range events { // Iterate through all provided events
+		b.machine.AddEvent(event) // Add each event to the underlying state machine
 	}
-	return b
+	return b // Return builder to enable method chaining
 }
 
 // AddTransition adds a basic transition without conditions or actions
+// Creates a simple state transition that occurs whenever the specified event is triggered
 func (b *FSMBuilder) AddTransition(from State, event Event, to State) Builder {
-	transition := Transition{
-		From:  from,
-		Event: event,
-		To:    to,
+	transition := Transition{ // Create transition structure with basic parameters
+		From:  from,  // Source state where transition begins
+		Event: event, // Event that triggers this transition
+		To:    to,    // Destination state where transition ends
 	}
 
 	// Automatically add states and events if they don't exist
-	b.machine.AddState(from)
-	b.machine.AddState(to)
-	b.machine.AddEvent(event)
+	b.machine.AddState(from)  // Ensure source state is registered in the FSM
+	b.machine.AddState(to)    // Ensure destination state is registered in the FSM
+	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
-	b.machine.AddTransition(transition)
-	return b
+	b.machine.AddTransition(transition) // Add the transition rule to the state machine
+	return b                             // Return builder to enable method chaining
 }
 
 // AddTransitionWithCondition adds a transition with a guard condition
+// Creates a conditional transition that only occurs if the condition function returns true
 func (b *FSMBuilder) AddTransitionWithCondition(from State, event Event, to State, condition TransitionCondition) Builder {
-	transition := Transition{
-		From:      from,
-		Event:     event,
-		To:        to,
-		Condition: condition,
+	transition := Transition{ // Create transition structure with condition guard
+		From:      from,      // Source state where transition begins
+		Event:     event,     // Event that triggers this transition
+		To:        to,        // Destination state where transition ends
+		Condition: condition, // Guard function that must return true for transition to occur
 	}
 
 	// Automatically add states and events if they don't exist
-	b.machine.AddState(from)
-	b.machine.AddState(to)
-	b.machine.AddEvent(event)
+	b.machine.AddState(from)  // Ensure source state is registered in the FSM
+	b.machine.AddState(to)    // Ensure destination state is registered in the FSM
+	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
-	b.machine.AddTransition(transition)
-	return b
+	b.machine.AddTransition(transition) // Add the conditional transition rule to the state machine
+	return b                             // Return builder to enable method chaining
 }
 
 // AddTransitionWithAction adds a transition with an action
+// Creates a transition that executes a specific function when the transition occurs
 func (b *FSMBuilder) AddTransitionWithAction(from State, event Event, to State, action TransitionAction) Builder {
-	transition := Transition{
-		From:   from,
-		Event:  event,
-		To:     to,
-		Action: action,
+	transition := Transition{ // Create transition structure with action callback
+		From:   from,   // Source state where transition begins
+		Event:  event,  // Event that triggers this transition
+		To:     to,     // Destination state where transition ends
+		Action: action, // Function to execute when transition occurs
 	}
 
 	// Automatically add states and events if they don't exist
-	b.machine.AddState(from)
-	b.machine.AddState(to)
-	b.machine.AddEvent(event)
+	b.machine.AddState(from)  // Ensure source state is registered in the FSM
+	b.machine.AddState(to)    // Ensure destination state is registered in the FSM
+	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
 	b.machine.AddTransition(transition)
 	return b
 }
 
 // AddTransitionFull adds a transition with both condition and action
+// Creates a fully-featured transition with both guard condition and action callback
 func (b *FSMBuilder) AddTransitionFull(from State, event Event, to State, condition TransitionCondition, action TransitionAction) Builder {
-	transition := Transition{
-		From:      from,
-		Event:     event,
-		To:        to,
-		Condition: condition,
-		Action:    action,
+	transition := Transition{ // Create transition structure with both condition and action
+		From:      from,      // Source state where transition begins
+		Event:     event,     // Event that triggers this transition
+		To:        to,        // Destination state where transition ends
+		Condition: condition, // Guard function that must return true for transition to occur
+		Action:    action,    // Function to execute when transition occurs
 	}
 
 	// Automatically add states and events if they don't exist
-	b.machine.AddState(from)
-	b.machine.AddState(to)
-	b.machine.AddEvent(event)
+	b.machine.AddState(from)  // Ensure source state is registered in the FSM
+	b.machine.AddState(to)    // Ensure destination state is registered in the FSM
+	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
-	b.machine.AddTransition(transition)
-	return b
+	b.machine.AddTransition(transition) // Add the full-featured transition rule to the state machine
+	return b                             // Return builder to enable method chaining
 }
 
 // SetInitialState sets the initial state for the FSM
+// Specifies which state the finite state machine should start in when initialized
 func (b *FSMBuilder) SetInitialState(state State) Builder {
-	b.initialState = state
-	b.machine.AddState(state)
-	return b
+	b.initialState = state           // Store the initial state for use during Build()
+	b.machine.AddState(state)        // Ensure the initial state is registered in the FSM
+	return b                         // Return builder to enable method chaining
 }
 
 // Build creates and validates the FSM, returning it ready for use
+// Final method in the builder chain that constructs the complete finite state machine
 func (b *FSMBuilder) Build() (Machine, error) {
 	// Validate the machine configuration
-	if err := b.machine.Validate(); err != nil {
-		return nil, err
+	if err := b.machine.Validate(); err != nil { // Check if FSM configuration is valid
+		return nil, err // Return error if validation fails
 	}
 
 	// Set initial state if specified
-	if b.initialState != "" {
-		if err := b.machine.Start(b.initialState); err != nil {
-			return nil, err
+	if b.initialState != "" {                                 // Check if initial state was configured
+		if err := b.machine.Start(b.initialState); err != nil { // Start FSM in initial state
+			return nil, err // Return error if starting fails
 		}
 	}
 
-	return b.machine, nil
+	return b.machine, nil // Return completed and validated state machine
 }
 
 // BuilderWithHooks extends the builder with hook functionality
