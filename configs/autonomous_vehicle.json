@@ -1,0 +1,279 @@
+{
+  "name": "autonomous_vehicle_controller",
+  "description": "Self-driving vehicle control system with AI decision making",
+  "initial_state": "parked",
+  "states": [
+    {
+      "name": "parked",
+      "description": "Vehicle safely parked"
+    },
+    {
+      "name": "starting",
+      "description": "Vehicle startup sequence"
+    },
+    {
+      "name": "idle",
+      "description": "Vehicle ready but not moving"
+    },
+    {
+      "name": "planning",
+      "description": "Route planning and decision making"
+    },
+    {
+      "name": "driving",
+      "description": "Vehicle actively driving"
+    },
+    {
+      "name": "navigating",
+      "description": "Complex navigation scenario"
+    },
+    {
+      "name": "emergency_stop",
+      "description": "Emergency braking/stopping"
+    },
+    {
+      "name": "obstacle_avoidance",
+      "description": "Avoiding detected obstacles"
+    },
+    {
+      "name": "parking",
+      "description": "Autonomous parking maneuver"
+    },
+    {
+      "name": "maintenance_mode",
+      "description": "Vehicle diagnostics and maintenance"
+    }
+  ],
+  "events": [
+    {
+      "name": "ignition_on",
+      "description": "Vehicle ignition started"
+    },
+    {
+      "name": "startup_complete",
+      "description": "All systems initialized"
+    },
+    {
+      "name": "destination_set",
+      "description": "Navigation destination configured"
+    },
+    {
+      "name": "route_calculated",
+      "description": "Optimal route determined"
+    },
+    {
+      "name": "start_driving",
+      "description": "Begin autonomous driving"
+    },
+    {
+      "name": "obstacle_detected",
+      "description": "Obstacle in path detected"
+    },
+    {
+      "name": "obstacle_cleared",
+      "description": "Path is clear"
+    },
+    {
+      "name": "emergency_signal",
+      "description": "Emergency stop required"
+    },
+    {
+      "name": "emergency_cleared",
+      "description": "Emergency condition resolved"
+    },
+    {
+      "name": "destination_reached",
+      "description": "Arrived at destination"
+    },
+    {
+      "name": "park_vehicle",
+      "description": "Initiate parking sequence"
+    },
+    {
+      "name": "parking_complete",
+      "description": "Vehicle successfully parked"
+    },
+    {
+      "name": "enter_maintenance",
+      "description": "Enter maintenance mode"
+    },
+    {
+      "name": "maintenance_complete",
+      "description": "Maintenance finished"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "parked",
+      "event": "ignition_on",
+      "to": "starting",
+      "action": "log",
+      "properties": {
+        "message": "Vehicle startup initiated"
+      }
+    },
+    {
+      "from": "starting",
+      "event": "startup_complete",
+      "to": "idle",
+      "condition": "context_has_key",
+      "action": "set_context",
+      "properties": {
+        "key": "all_systems_ready",
+        "ready_time": "now"
+      }
+    },
+    {
+      "from": "idle",
+      "event": "destination_set",
+      "to": "planning",
+      "action": "set_context",
+      "properties": {
+        "key": "planning_active",
+        "value": "true"
+      }
+    },
+    {
+      "from": "planning",
+      "event": "route_calculated",
+      "to": "idle",
+      "condition": "context_has_key",
+      "action": "log",
+      "properties": {
+        "key": "valid_route",
+        "message": "Route calculated successfully"
+      }
+    },
+    {
+      "from": "idle",
+      "event": "start_driving",
+      "to": "driving",
+      "condition": "context_has_key",
+      "action": "increment_counter",
+      "properties": {
+        "key": "valid_route",
+        "counter_key": "trip_count"
+      }
+    },
+    {
+      "from": "driving",
+      "event": "obstacle_detected",
+      "to": "obstacle_avoidance",
+      "action": "log",
+      "properties": {
+        "message": "Obstacle detected, initiating avoidance"
+      }
+    },
+    {
+      "from": "obstacle_avoidance",
+      "event": "obstacle_cleared",
+      "to": "driving",
+      "action": "log",
+      "properties": {
+        "message": "Obstacle cleared, resuming normal driving"
+      }
+    },
+    {
+      "from": "driving",
+      "event": "emergency_signal",
+      "to": "emergency_stop",
+      "action": "log",
+      "properties": {
+        "message": "EMERGENCY STOP ACTIVATED"
+      }
+    },
+    {
+      "from": "obstacle_avoidance",
+      "event": "emergency_signal",
+      "to": "emergency_stop",
+      "action": "log",
+      "properties": {
+        "message": "EMERGENCY STOP FROM AVOIDANCE"
+      }
+    },
+    {
+      "from": "emergency_stop",
+      "event": "emergency_cleared",
+      "to": "idle",
+      "action": "log",
+      "properties": {
+        "message": "Emergency cleared, vehicle safe"
+      }
+    },
+    {
+      "from": "driving",
+      "event": "destination_reached",
+      "to": "idle",
+      "action": "set_context",
+      "properties": {
+        "key": "trip_completed",
+        "value": "true"
+      }
+    },
+    {
+      "from": "idle",
+      "event": "park_vehicle",
+      "to": "parking",
+      "action": "log",
+      "properties": {
+        "message": "Initiating autonomous parking"
+      }
+    },
+    {
+      "from": "parking",
+      "event": "parking_complete",
+      "to": "parked",
+      "action": "log",
+      "properties": {
+        "message": "Vehicle parked successfully"
+      }
+    },
+    {
+      "from": "idle",
+      "event": "enter_maintenance",
+      "to": "maintenance_mode",
+      "action": "log",
+      "properties": {
+        "message": "Entering maintenance mode"
+      }
+    },
+    {
+      "from": "maintenance_mode",
+      "event": "maintenance_complete",
+      "to": "idle",
+      "action": "log",
+      "properties": {
+        "message": "Maintenance completed"
+      }
+    }
+  ],
+  "context": {
+    "vehicle_id": "AV_001",
+    "ai_version": "3.2.1",
+    "all_systems_ready": true,
+    "valid_route": false,
+    "planning_active": false,
+    "trip_count": 0,
+    "trip_completed": false,
+    "max_speed": 65,
+    "safety_level": "high"
+  },
+  "hooks": {
+    "on_state_enter": [
+      {
+        "action": "log_state_enter",
+        "properties": {
+          "prefix": "AUTONOMOUS_VEHICLE"
+        }
+      }
+    ],
+    "after_transition": [
+      {
+        "action": "log_transition",
+        "properties": {
+          "prefix": "AV_CONTROL"
+        }
+      }
+    ]
+  }
+}

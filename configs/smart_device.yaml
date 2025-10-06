@@ -1,0 +1,159 @@
+name: "smart_device_controller"
+description: "Advanced IoT device controller with autonomous behavior"
+initial_state: "standby"
+
+states:
+  - name: "standby"
+    description: "Device waiting for activation"
+  - name: "initializing"
+    description: "Device startup and self-diagnostics"
+  - name: "active"
+    description: "Device operating normally"
+  - name: "monitoring"
+    description: "Device monitoring environment"
+  - name: "alerting"
+    description: "Device detected anomaly"
+  - name: "maintenance"
+    description: "Device in maintenance mode"
+  - name: "error"
+    description: "Device error state"
+  - name: "shutdown"
+    description: "Device shutting down"
+
+events:
+  - name: "power_on"
+    description: "Device powered on"
+  - name: "init_complete"
+    description: "Initialization completed"
+  - name: "start_monitoring"
+    description: "Begin environmental monitoring"
+  - name: "anomaly_detected"
+    description: "Environmental anomaly detected"
+  - name: "anomaly_cleared"
+    description: "Anomaly no longer present"
+  - name: "maintenance_required"
+    description: "Maintenance needed"
+  - name: "maintenance_complete"
+    description: "Maintenance finished"
+  - name: "error_occurred"
+    description: "Error condition detected"
+  - name: "error_cleared"
+    description: "Error resolved"
+  - name: "power_off"
+    description: "Device power off requested"
+
+transitions:
+  - from: "standby"
+    event: "power_on"
+    to: "initializing"
+    action: "log"
+    properties:
+      message: "Device powering on"
+
+  - from: "initializing"
+    event: "init_complete"
+    to: "active"
+    condition: "context_has_key"
+    properties:
+      key: "self_test_passed"
+    action: "set_context"
+    properties:
+      key: "startup_time"
+      value: "now"
+
+  - from: "active"
+    event: "start_monitoring"
+    to: "monitoring"
+    action: "set_context"
+    properties:
+      key: "monitoring_active"
+      value: "true"
+
+  - from: "monitoring"
+    event: "anomaly_detected"
+    to: "alerting"
+    condition: "context_greater_than"
+    properties:
+      key: "sensor_reading"
+      threshold: "80"
+    action: "increment_counter"
+    properties:
+      key: "alert_count"
+
+  - from: "alerting"
+    event: "anomaly_cleared"
+    to: "monitoring"
+    action: "log"
+    properties:
+      message: "Anomaly resolved, resuming monitoring"
+
+  - from: "active"
+    event: "maintenance_required"
+    to: "maintenance"
+    action: "set_context"
+    properties:
+      key: "maintenance_start"
+      value: "now"
+
+  - from: "maintenance"
+    event: "maintenance_complete"
+    to: "active"
+    action: "log"
+    properties:
+      message: "Maintenance completed successfully"
+
+  # Error handling transitions
+  - from: "active"
+    event: "error_occurred"
+    to: "error"
+    action: "log"
+    properties:
+      message: "Error detected, entering error state"
+
+  - from: "monitoring"
+    event: "error_occurred"
+    to: "error"
+    action: "log"
+    properties:
+      message: "Monitoring error detected"
+
+  - from: "error"
+    event: "error_cleared"
+    to: "active"
+    action: "log"
+    properties:
+      message: "Error cleared, returning to active"
+
+  # Shutdown transitions
+  - from: "active"
+    event: "power_off"
+    to: "shutdown"
+    action: "log"
+    properties:
+      message: "Initiating controlled shutdown"
+
+  - from: "monitoring"
+    event: "power_off"
+    to: "shutdown"
+    action: "log"
+    properties:
+      message: "Stopping monitoring and shutting down"
+
+context:
+  device_id: "SMART_DEV_001"
+  firmware_version: "2.1.0"
+  self_test_passed: true
+  sensor_reading: 0
+  alert_count: 0
+  monitoring_active: false
+
+hooks:
+  on_state_enter:
+    - action: "log_state_enter"
+      properties:
+        prefix: "SMART_DEVICE"
+  
+  after_transition:
+    - action: "log_transition"
+      properties:
+        prefix: "DEVICE_CTRL"
