@@ -72,7 +72,7 @@ type FSMError struct {
 }
 
 func (e FSMError) Error() string {
-	return fmt.Sprintf("FSM Error [%s]: %s (State: %s, Event: %s)", 
+	return fmt.Sprintf("FSM Error [%s]: %s (State: %s, Event: %s)",
 		e.Type, e.Message, e.State, e.Event)
 }
 
@@ -101,31 +101,31 @@ type Machine interface {
 	CurrentState() State
 	SetState(state State) error
 	IsValidState(state State) bool
-	
+
 	// Event operations
 	SendEvent(event Event) (*TransitionResult, error)
 	CanTransition(event Event) bool
 	GetValidEvents() []Event
-	
+
 	// Transition operations
 	AddTransition(transition Transition) error
 	RemoveTransition(from State, event Event) error
 	GetTransitions() []Transition
-	
+
 	// Hook operations
 	AddHook(hookType HookType, hook Hook)
 	RemoveHook(hookType HookType)
-	
+
 	// Context operations
 	GetContext() Context
 	SetContext(context Context)
-	
+
 	// Machine lifecycle
 	Start(initialState State) error
 	Stop() error
 	Reset() error
 	IsRunning() bool
-	
+
 	// Validation
 	Validate() error
 }

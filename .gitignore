@@ -4,7 +4,6 @@
 *.dll
 *.so
 *.dylib
-fla.exe
 
 # Test binary, built with `go test -c`
 *.test
@@ -18,9 +17,12 @@ fla.exe
 # Go workspace file
 go.work
 
-# IDE
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -31,46 +33,23 @@ go.work
 ehthumbs.db
 Thumbs.db
 
-# Logs
+# Log files
 *.log
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Temporary files
+*.tmp
+*.temp
+*.backup
 
-# Coverage directory used by tools like istanbul
-coverage/
+# Build artifacts
+/bin/
+/dist/
 
-# nyc test coverage
-.nyc_output
-
-# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
-.grunt
-
-# Bower dependency directory (https://bower.io/)
-bower_components
-
-# node_modules (if any)
-node_modules/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
+# Environment files
 .env
-.env.test
+.env.local
+.env.production
 
-# Build outputs
-build/
-dist/
+# Coverage reports
+coverage.txt
+coverage.html

@@ -9,8 +9,8 @@ import (
 
 // NaturalLanguageParser converts natural language descriptions to FSM configurations
 type NaturalLanguageParser struct {
-	statePatterns     map[string]*regexp.Regexp
-	eventPatterns     map[string]*regexp.Regexp
+	statePatterns      map[string]*regexp.Regexp
+	eventPatterns      map[string]*regexp.Regexp
 	transitionPatterns map[string]*regexp.Regexp
 }
 
@@ -148,7 +148,7 @@ func (nlp *NaturalLanguageParser) extractTransitions(description string) ([]Tran
 		for _, match := range matches {
 			if len(match) >= 3 {
 				var from, to, event string
-				
+
 				if len(match) >= 4 { // from X to Y when Z
 					from, to, event = match[1], match[2], match[3]
 				} else { // X -> Y
@@ -305,7 +305,7 @@ func (nlp *NaturalLanguageParser) GenerateExample(exampleType string) (*ConfigMa
 			From yellow to red when timer
 		`)
 		return config, err
-		
+
 	case "order_processing":
 		config, err := nlp.ParseDescription(`
 			States: pending, processing, shipped, delivered, cancelled
@@ -317,7 +317,7 @@ func (nlp *NaturalLanguageParser) GenerateExample(exampleType string) (*ConfigMa
 			From processing to cancelled when cancel
 		`)
 		return config, err
-		
+
 	case "user_session":
 		config, err := nlp.ParseDescription(`
 			States: anonymous, authenticated, premium, locked
@@ -329,7 +329,7 @@ func (nlp *NaturalLanguageParser) GenerateExample(exampleType string) (*ConfigMa
 			From locked to authenticated when unlock
 		`)
 		return config, err
-		
+
 	default:
 		return nil, fmt.Errorf("unknown example type: %s", exampleType)
 	}

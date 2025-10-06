@@ -68,12 +68,12 @@ type TransitionDesign struct {
 
 // RealTimeMetrics tracks performance metrics
 type RealTimeMetrics struct {
-	TransitionsPerSecond float64           `json:"transitions_per_second"`
-	AverageResponseTime  time.Duration     `json:"average_response_time"`
-	ErrorRate           float64           `json:"error_rate"`
-	StateDistribution   map[string]int    `json:"state_distribution"`
-	EventFrequency      map[string]int    `json:"event_frequency"`
-	LastUpdated         time.Time         `json:"last_updated"`
+	TransitionsPerSecond float64        `json:"transitions_per_second"`
+	AverageResponseTime  time.Duration  `json:"average_response_time"`
+	ErrorRate            float64        `json:"error_rate"`
+	StateDistribution    map[string]int `json:"state_distribution"`
+	EventFrequency       map[string]int `json:"event_frequency"`
+	LastUpdated          time.Time      `json:"last_updated"`
 }
 
 // NewAdvancedVisualizationServer creates an enhanced visualization server
@@ -248,7 +248,7 @@ func (avs *AdvancedVisualizationServer) handleDashboard(w http.ResponseWriter, r
 </body>
 </html>`
 
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	t, _ := template.New("dashboard").Parse(tmpl)
 	t.Execute(w, nil)
 }
@@ -484,7 +484,7 @@ From working to done when finish"></textarea>
 </body>
 </html>`
 
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	t, _ := template.New("designer").Parse(tmpl)
 	t.Execute(w, nil)
 }
@@ -556,10 +556,10 @@ func (avs *AdvancedVisualizationServer) handleDesignSessionsAPI(w http.ResponseW
 func (avs *AdvancedVisualizationServer) RegisterMachine(name string, machine fsm.Machine) {
 	avs.mu.Lock()
 	defer avs.mu.Unlock()
-	
+
 	avs.machines[name] = machine
 	avs.history[name] = make([]TransitionHistory, 0)
-	
+
 	// Register with streamer
 	avs.streamer.RegisterMachine(name, machine)
 }
@@ -604,22 +604,22 @@ type TransitionHistory struct {
 
 // MachineStatus represents machine status for API
 type MachineStatus struct {
-	Name         string   `json:"name"`
-	CurrentState string   `json:"current_state"`
-	IsRunning    bool     `json:"is_running"`
-	ValidEvents  []string `json:"valid_events"`
+	Name         string    `json:"name"`
+	CurrentState string    `json:"current_state"`
+	IsRunning    bool      `json:"is_running"`
+	ValidEvents  []string  `json:"valid_events"`
 	LastUpdate   time.Time `json:"last_update"`
 }
 
 // Placeholder handlers for other endpoints
 func (avs *AdvancedVisualizationServer) handleAnalyzer(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    fmt.Fprintf(w, "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Performance Analyzer</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f5f7fb;color:#1f2937}.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e5e7eb}</style></head><body><div class=\"card\"><h1>Performance Analyzer</h1><p>Analytics and performance metrics coming soon...</p></div></body></html>")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Performance Analyzer</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f5f7fb;color:#1f2937}.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e5e7eb}</style></head><body><div class=\"card\"><h1>Performance Analyzer</h1><p>Analytics and performance metrics coming soon...</p></div></body></html>")
 }
 
 func (avs *AdvancedVisualizationServer) handleStreaming(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    fmt.Fprintf(w, "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Event Streaming</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f5f7fb;color:#1f2937}.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e5e7eb}</style></head><body><div class=\"card\"><h1>Event Streaming</h1><p>Real-time event streaming interface coming soon...</p></div></body></html>")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Event Streaming</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f5f7fb;color:#1f2937}.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e5e7eb}</style></head><body><div class=\"card\"><h1>Event Streaming</h1><p>Real-time event streaming interface coming soon...</p></div></body></html>")
 }
 
 func (avs *AdvancedVisualizationServer) handleMachineAPI(w http.ResponseWriter, r *http.Request) {
@@ -628,7 +628,7 @@ func (avs *AdvancedVisualizationServer) handleMachineAPI(w http.ResponseWriter, 
 }
 
 func (avs *AdvancedVisualizationServer) handleDesignSessionAPI(w http.ResponseWriter, r *http.Request) {
-	// Handle individual design session operations  
+	// Handle individual design session operations
 	fmt.Fprintf(w, "Design session API endpoint")
 }
 
@@ -637,12 +637,12 @@ func (avs *AdvancedVisualizationServer) handleMetricsAPI(w http.ResponseWriter, 
 	metrics := RealTimeMetrics{
 		TransitionsPerSecond: 0.0,
 		AverageResponseTime:  0,
-		ErrorRate:           0.0,
-		StateDistribution:   make(map[string]int),
-		EventFrequency:      make(map[string]int),
-		LastUpdated:         time.Now(),
+		ErrorRate:            0.0,
+		StateDistribution:    make(map[string]int),
+		EventFrequency:       make(map[string]int),
+		LastUpdated:          time.Now(),
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(metrics)
 }

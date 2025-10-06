@@ -50,12 +50,12 @@ func (b *FSMBuilder) AddTransition(from State, event Event, to State) Builder {
 		Event: event,
 		To:    to,
 	}
-	
+
 	// Automatically add states and events if they don't exist
 	b.machine.AddState(from)
 	b.machine.AddState(to)
 	b.machine.AddEvent(event)
-	
+
 	b.machine.AddTransition(transition)
 	return b
 }
@@ -68,12 +68,12 @@ func (b *FSMBuilder) AddTransitionWithCondition(from State, event Event, to Stat
 		To:        to,
 		Condition: condition,
 	}
-	
+
 	// Automatically add states and events if they don't exist
 	b.machine.AddState(from)
 	b.machine.AddState(to)
 	b.machine.AddEvent(event)
-	
+
 	b.machine.AddTransition(transition)
 	return b
 }
@@ -86,12 +86,12 @@ func (b *FSMBuilder) AddTransitionWithAction(from State, event Event, to State, 
 		To:     to,
 		Action: action,
 	}
-	
+
 	// Automatically add states and events if they don't exist
 	b.machine.AddState(from)
 	b.machine.AddState(to)
 	b.machine.AddEvent(event)
-	
+
 	b.machine.AddTransition(transition)
 	return b
 }
@@ -105,12 +105,12 @@ func (b *FSMBuilder) AddTransitionFull(from State, event Event, to State, condit
 		Condition: condition,
 		Action:    action,
 	}
-	
+
 	// Automatically add states and events if they don't exist
 	b.machine.AddState(from)
 	b.machine.AddState(to)
 	b.machine.AddEvent(event)
-	
+
 	b.machine.AddTransition(transition)
 	return b
 }
@@ -128,14 +128,14 @@ func (b *FSMBuilder) Build() (Machine, error) {
 	if err := b.machine.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	// Set initial state if specified
 	if b.initialState != "" {
 		if err := b.machine.Start(b.initialState); err != nil {
 			return nil, err
 		}
 	}
-	
+
 	return b.machine, nil
 }
 
@@ -180,6 +180,50 @@ func (b *BuilderWithHooks) AddOnStateExitHook(hook Hook) *BuilderWithHooks {
 // AddOnTransitionErrorHook adds a hook that executes when transitions fail
 func (b *BuilderWithHooks) AddOnTransitionErrorHook(hook Hook) *BuilderWithHooks {
 	b.machine.AddHook(OnTransitionError, hook)
+	return b
+}
+
+// Override methods to return *BuilderWithHooks instead of Builder
+
+// AddStates adds multiple states to the FSM
+func (b *BuilderWithHooks) AddStates(states ...State) *BuilderWithHooks {
+	b.FSMBuilder.AddStates(states...)
+	return b
+}
+
+// AddEvents adds multiple events to the FSM
+func (b *BuilderWithHooks) AddEvents(events ...Event) *BuilderWithHooks {
+	b.FSMBuilder.AddEvents(events...)
+	return b
+}
+
+// AddTransition adds a basic transition without conditions or actions
+func (b *BuilderWithHooks) AddTransition(from State, event Event, to State) *BuilderWithHooks {
+	b.FSMBuilder.AddTransition(from, event, to)
+	return b
+}
+
+// AddTransitionWithAction adds a transition with an action
+func (b *BuilderWithHooks) AddTransitionWithAction(from State, event Event, to State, action TransitionAction) *BuilderWithHooks {
+	b.FSMBuilder.AddTransitionWithAction(from, event, to, action)
+	return b
+}
+
+// AddTransitionWithCondition adds a transition with a condition
+func (b *BuilderWithHooks) AddTransitionWithCondition(from State, event Event, to State, condition TransitionCondition) *BuilderWithHooks {
+	b.FSMBuilder.AddTransitionWithCondition(from, event, to, condition)
+	return b
+}
+
+// AddTransitionFull adds a transition with both condition and action
+func (b *BuilderWithHooks) AddTransitionFull(from State, event Event, to State, condition TransitionCondition, action TransitionAction) *BuilderWithHooks {
+	b.FSMBuilder.AddTransitionFull(from, event, to, condition, action)
+	return b
+}
+
+// SetInitialState sets the initial state for the FSM
+func (b *BuilderWithHooks) SetInitialState(state State) *BuilderWithHooks {
+	b.FSMBuilder.SetInitialState(state)
 	return b
 }
 

@@ -146,7 +146,7 @@ func TestPerformanceUnderLoad(t *testing.T) {
 	duration := time.Since(start)
 	transitionsPerSecond := float64(iterations*3) / duration.Seconds()
 
-	t.Logf("Processed %d transitions in %v (%.2f transitions/second)", 
+	t.Logf("Processed %d transitions in %v (%.2f transitions/second)",
 		iterations*3, duration, transitionsPerSecond)
 
 	// Performance should be reasonable (at least 1000 transitions/second)
@@ -197,7 +197,7 @@ func TestLargeStateMachine(t *testing.T) {
 	// Create a large FSM with many states and transitions
 	numStates := 100
 	for i := 0; i < numStates; i++ {
-		state := State(string(rune('A' + i%26)) + string(rune('A' + (i/26)%26)))
+		state := State(string(rune('A'+i%26)) + string(rune('A'+(i/26)%26)))
 		builder.AddState(state)
 	}
 
@@ -209,13 +209,13 @@ func TestLargeStateMachine(t *testing.T) {
 
 	// Add transitions (create a cycle)
 	for i := 0; i < numStates-1; i++ {
-		fromState := State(string(rune('A' + i%26)) + string(rune('A' + (i/26)%26)))
-		toState := State(string(rune('A' + (i+1)%26)) + string(rune('A' + ((i+1)/26)%26)))
+		fromState := State(string(rune('A'+i%26)) + string(rune('A'+(i/26)%26)))
+		toState := State(string(rune('A'+(i+1)%26)) + string(rune('A'+((i+1)/26)%26)))
 		builder.AddTransition(fromState, "next", toState)
 	}
 
 	// Close the cycle
-	lastState := State(string(rune('A' + (numStates-1)%26)) + string(rune('A' + ((numStates-1)/26)%26)))
+	lastState := State(string(rune('A'+(numStates-1)%26)) + string(rune('A'+((numStates-1)/26)%26)))
 	firstState := State("AA")
 	builder.AddTransition(lastState, "next", firstState)
 

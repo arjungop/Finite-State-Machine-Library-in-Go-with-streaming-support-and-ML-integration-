@@ -12,14 +12,14 @@ import (
 
 // ConfigMachine represents a machine configuration that can be loaded from files
 type ConfigMachine struct {
-	Name         string                    `json:"name" yaml:"name"`
-	Description  string                    `json:"description" yaml:"description"`
-	InitialState string                    `json:"initial_state" yaml:"initial_state"`
-	States       []StateConfig             `json:"states" yaml:"states"`
-	Events       []EventConfig             `json:"events" yaml:"events"`
-	Transitions  []TransitionConfig        `json:"transitions" yaml:"transitions"`
-	Context      map[string]interface{}    `json:"context" yaml:"context"`
-	Hooks        map[string][]HookConfig   `json:"hooks" yaml:"hooks"`
+	Name         string                  `json:"name" yaml:"name"`
+	Description  string                  `json:"description" yaml:"description"`
+	InitialState string                  `json:"initial_state" yaml:"initial_state"`
+	States       []StateConfig           `json:"states" yaml:"states"`
+	Events       []EventConfig           `json:"events" yaml:"events"`
+	Transitions  []TransitionConfig      `json:"transitions" yaml:"transitions"`
+	Context      map[string]interface{}  `json:"context" yaml:"context"`
+	Hooks        map[string][]HookConfig `json:"hooks" yaml:"hooks"`
 }
 
 // StateConfig represents a state configuration
@@ -38,25 +38,25 @@ type EventConfig struct {
 
 // TransitionConfig represents a transition configuration
 type TransitionConfig struct {
-	From        string            `json:"from" yaml:"from"`
-	Event       string            `json:"event" yaml:"event"`
-	To          string            `json:"to" yaml:"to"`
-	Condition   string            `json:"condition" yaml:"condition"`
-	Action      string            `json:"action" yaml:"action"`
-	Properties  map[string]string `json:"properties" yaml:"properties"`
+	From       string            `json:"from" yaml:"from"`
+	Event      string            `json:"event" yaml:"event"`
+	To         string            `json:"to" yaml:"to"`
+	Condition  string            `json:"condition" yaml:"condition"`
+	Action     string            `json:"action" yaml:"action"`
+	Properties map[string]string `json:"properties" yaml:"properties"`
 }
 
 // HookConfig represents a hook configuration
 type HookConfig struct {
-	Type        string            `json:"type" yaml:"type"`
-	Action      string            `json:"action" yaml:"action"`
-	Properties  map[string]string `json:"properties" yaml:"properties"`
+	Type       string            `json:"type" yaml:"type"`
+	Action     string            `json:"action" yaml:"action"`
+	Properties map[string]string `json:"properties" yaml:"properties"`
 }
 
 // ConditionRegistry holds registered condition functions
 type ConditionRegistry map[string]func(props map[string]string) TransitionCondition
 
-// ActionRegistry holds registered action functions  
+// ActionRegistry holds registered action functions
 type ActionRegistry map[string]func(props map[string]string) TransitionAction
 
 // HookRegistry holds registered hook functions
@@ -76,34 +76,34 @@ func NewConfigLoader() *ConfigLoader {
 		actions:    make(ActionRegistry),
 		hooks:      make(HookRegistry),
 	}
-	
+
 	// Register default conditions
 	loader.RegisterCondition("always_true", func(props map[string]string) TransitionCondition {
 		return AlwaysTrue()
 	})
-	
+
 	loader.RegisterCondition("always_false", func(props map[string]string) TransitionCondition {
 		return AlwaysFalse()
 	})
-	
+
 	loader.RegisterCondition("context_has_key", func(props map[string]string) TransitionCondition {
 		key := props["key"]
 		return ContextHasKey(key)
 	})
-	
+
 	loader.RegisterCondition("context_equals", func(props map[string]string) TransitionCondition {
 		key := props["key"]
 		value := props["value"]
 		return ContextEquals(key, value)
 	})
-	
+
 	loader.RegisterCondition("context_greater_than", func(props map[string]string) TransitionCondition {
 		key := props["key"]
 		thresholdStr := props["threshold"]
 		threshold, _ := strconv.ParseFloat(thresholdStr, 64)
 		return ContextGreaterThan(key, threshold)
 	})
-	
+
 	// Register default actions
 	loader.RegisterAction("log", func(props map[string]string) TransitionAction {
 		message := props["message"]
@@ -111,18 +111,18 @@ func NewConfigLoader() *ConfigLoader {
 			fmt.Printf("[LOG] %s: %s\n", message, msg)
 		})
 	})
-	
+
 	loader.RegisterAction("set_context", func(props map[string]string) TransitionAction {
 		key := props["key"]
 		value := props["value"]
 		return SetContextValue(key, value)
 	})
-	
+
 	loader.RegisterAction("increment_counter", func(props map[string]string) TransitionAction {
 		key := props["key"]
 		return IncrementCounter(key)
 	})
-	
+
 	// Register default hooks
 	loader.RegisterHook("log_transition", func(props map[string]string) Hook {
 		prefix := props["prefix"]
@@ -130,11 +130,11 @@ func NewConfigLoader() *ConfigLoader {
 			prefix = "TRANSITION"
 		}
 		return func(result TransitionResult, context Context) {
-			fmt.Printf("[%s] %s -> %s (Event: %s)\n", 
+			fmt.Printf("[%s] %s -> %s (Event: %s)\n",
 				prefix, result.FromState, result.ToState, result.Event)
 		}
 	})
-	
+
 	loader.RegisterHook("log_state_enter", func(props map[string]string) Hook {
 		prefix := props["prefix"]
 		if prefix == "" {
@@ -144,7 +144,7 @@ func NewConfigLoader() *ConfigLoader {
 			fmt.Printf("[%s] Entered state: %s\n", prefix, result.ToState)
 		}
 	})
-	
+
 	return loader
 }
 
@@ -169,13 +169,13 @@ func (cl *ConfigLoader) LoadFromJSON(filename string) (*ConfigMachine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read JSON file: %w", err)
 	}
-	
+
 	var config ConfigMachine
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
-	
+
 	return &config, nil
 }
 
@@ -185,36 +185,36 @@ func (cl *ConfigLoader) LoadFromYAML(filename string) (*ConfigMachine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read YAML file: %w", err)
 	}
-	
+
 	var config ConfigMachine
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
-	
+
 	return &config, nil
 }
 
 // BuildMachine builds an FSM from a configuration
 func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 	builder := NewBuilderWithHooks()
-	
+
 	// Add states
 	for _, stateConfig := range config.States {
 		builder.AddState(State(stateConfig.Name))
 	}
-	
+
 	// Add events
 	for _, eventConfig := range config.Events {
 		builder.AddEvent(Event(eventConfig.Name))
 	}
-	
+
 	// Add transitions
 	for _, transConfig := range config.Transitions {
 		from := State(transConfig.From)
 		event := Event(transConfig.Event)
 		to := State(transConfig.To)
-		
+
 		// Handle condition
 		var condition TransitionCondition
 		if transConfig.Condition != "" {
@@ -224,7 +224,7 @@ func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 				return nil, fmt.Errorf("unknown condition: %s", transConfig.Condition)
 			}
 		}
-		
+
 		// Handle action
 		var action TransitionAction
 		if transConfig.Action != "" {
@@ -234,7 +234,7 @@ func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 				return nil, fmt.Errorf("unknown action: %s", transConfig.Action)
 			}
 		}
-		
+
 		// Add transition based on what's configured
 		if condition != nil && action != nil {
 			builder.AddTransitionFull(from, event, to, condition, action)
@@ -246,14 +246,14 @@ func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 			builder.AddTransition(from, event, to)
 		}
 	}
-	
+
 	// Add hooks
 	for hookTypeStr, hookConfigs := range config.Hooks {
 		hookType, err := cl.parseHookType(hookTypeStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid hook type: %s", hookTypeStr)
 		}
-		
+
 		for _, hookConfig := range hookConfigs {
 			if hookFactory, exists := cl.hooks[hookConfig.Action]; exists {
 				hook := hookFactory(hookConfig.Properties)
@@ -274,18 +274,18 @@ func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 			}
 		}
 	}
-	
+
 	// Set initial state
 	if config.InitialState != "" {
 		builder.SetInitialState(State(config.InitialState))
 	}
-	
+
 	// Build the machine
 	machine, err := builder.Build()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Set initial context
 	if config.Context != nil {
 		context := machine.GetContext()
@@ -293,7 +293,7 @@ func (cl *ConfigLoader) BuildMachine(config *ConfigMachine) (Machine, error) {
 			context.Set(key, value)
 		}
 	}
-	
+
 	return machine, nil
 }
 
@@ -321,12 +321,12 @@ func (cl *ConfigLoader) SaveToJSON(config *ConfigMachine, filename string) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	err = ioutil.WriteFile(filename, data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write JSON file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -336,12 +336,12 @@ func (cl *ConfigLoader) SaveToYAML(config *ConfigMachine, filename string) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal YAML: %w", err)
 	}
-	
+
 	err = ioutil.WriteFile(filename, data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write YAML file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -353,13 +353,13 @@ func (cl *ConfigLoader) ExtractConfig(machine Machine, name, description string)
 		InitialState: string(machine.CurrentState()),
 		Context:      make(map[string]interface{}),
 	}
-	
+
 	// Extract context
 	contextData := machine.GetContext().GetAll()
 	for key, value := range contextData {
 		config.Context[key] = value
 	}
-	
+
 	// Extract transitions (this would need additional machine introspection methods)
 	transitions := machine.GetTransitions()
 	for _, transition := range transitions {
@@ -368,13 +368,13 @@ func (cl *ConfigLoader) ExtractConfig(machine Machine, name, description string)
 			Event: string(transition.Event),
 			To:    string(transition.To),
 		}
-		
+
 		// Note: We can't easily extract condition/action details without additional metadata
 		// This would require the machine to store configuration metadata
-		
+
 		config.Transitions = append(config.Transitions, transConfig)
 	}
-	
+
 	return config
 }
 
@@ -403,11 +403,11 @@ func (rr *RuntimeReconfigurator) ReconfigureFromFile(machineName, configFile str
 	if !exists {
 		return fmt.Errorf("machine not found: %s", machineName)
 	}
-	
+
 	// Load new configuration
 	var config *ConfigMachine
 	var err error
-	
+
 	if strings.HasSuffix(configFile, ".json") {
 		config, err = rr.loader.LoadFromJSON(configFile)
 	} else if strings.HasSuffix(configFile, ".yaml") || strings.HasSuffix(configFile, ".yml") {
@@ -415,20 +415,20 @@ func (rr *RuntimeReconfigurator) ReconfigureFromFile(machineName, configFile str
 	} else {
 		return fmt.Errorf("unsupported config file format: %s", configFile)
 	}
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	// Build new machine
 	newMachine, err := rr.loader.BuildMachine(config)
 	if err != nil {
 		return err
 	}
-	
+
 	// Replace the machine (in a real implementation, this might involve more sophisticated merging)
 	rr.machines[machineName] = newMachine
-	
+
 	return nil
 }
 

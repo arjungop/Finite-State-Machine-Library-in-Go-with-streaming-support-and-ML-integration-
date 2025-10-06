@@ -43,7 +43,7 @@ type StreamConfig struct {
 // NewEventStreamer creates a new event streaming system
 func NewEventStreamer(config StreamConfig) *EventStreamer {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	if config.BufferSize == 0 {
 		config.BufferSize = 100
 	}
@@ -217,7 +217,7 @@ func (es *EventStreamer) handleSubscription(subscriber chan EventMessage, handle
 // Close stops the event streamer
 func (es *EventStreamer) Close() error {
 	es.cancel()
-	
+
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
@@ -225,7 +225,7 @@ func (es *EventStreamer) Close() error {
 	for _, publisher := range es.publishers {
 		close(publisher)
 	}
-	
+
 	for _, subscriberList := range es.subscribers {
 		for _, subscriber := range subscriberList {
 			close(subscriber)
@@ -252,7 +252,7 @@ func NewEventSourcing() *EventSourcing {
 func (es *EventSourcing) AppendEvent(event EventMessage) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
-	
+
 	es.events = append(es.events, event)
 }
 
@@ -260,14 +260,14 @@ func (es *EventSourcing) AppendEvent(event EventMessage) {
 func (es *EventSourcing) GetEvents(machineID string) []EventMessage {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
-	
+
 	var machineEvents []EventMessage
 	for _, event := range es.events {
 		if event.MachineID == machineID {
 			machineEvents = append(machineEvents, event)
 		}
 	}
-	
+
 	return machineEvents
 }
 
@@ -275,21 +275,21 @@ func (es *EventSourcing) GetEvents(machineID string) []EventMessage {
 func (es *EventSourcing) GetEventsAfter(timestamp time.Time) []EventMessage {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
-	
+
 	var recentEvents []EventMessage
 	for _, event := range es.events {
 		if event.Timestamp.After(timestamp) {
 			recentEvents = append(recentEvents, event)
 		}
 	}
-	
+
 	return recentEvents
 }
 
 // ReplayEvents replays events on a machine to reconstruct state
 func (es *EventSourcing) ReplayEvents(machine Machine, machineID string) error {
 	events := es.GetEvents(machineID)
-	
+
 	for _, event := range events {
 		// Apply context
 		if event.Context != nil {
@@ -298,11 +298,11 @@ func (es *EventSourcing) ReplayEvents(machine Machine, machineID string) error {
 				context.Set(key, value)
 			}
 		}
-		
+
 		// Send event
 		machine.SendEvent(Event(event.Event))
 	}
-	
+
 	return nil
 }
 
@@ -310,7 +310,7 @@ func (es *EventSourcing) ReplayEvents(machine Machine, machineID string) error {
 func (es *EventSourcing) SerializeEvents() ([]byte, error) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
-	
+
 	return json.Marshal(es.events)
 }
 
@@ -318,7 +318,7 @@ func (es *EventSourcing) SerializeEvents() ([]byte, error) {
 func (es *EventSourcing) DeserializeEvents(data []byte) error {
 	es.mu.Lock()
 	defer es.mu.Unlock()
-	
+
 	return json.Unmarshal(data, &es.events)
 }
 
@@ -343,10 +343,10 @@ func NewDistributedFSM(id string, machine Machine, streamer *EventStreamer) *Dis
 		Sourcing:     NewEventSourcing(),
 		ID:           id,
 	}
-	
+
 	// Register with streamer
 	streamer.RegisterMachine(id, machine)
-	
+
 	return dfsm
 }
 
@@ -361,10 +361,10 @@ func (dfsm *DistributedFSM) SendDistributedEvent(event string, targetMachine str
 		Source:      dfsm.ID,
 		Destination: targetMachine,
 	}
-	
+
 	// Store in event sourcing
 	dfsm.Sourcing.AppendEvent(msg)
-	
+
 	// Publish to stream
 	return dfsm.Streamer.PublishEvent(msg)
 }

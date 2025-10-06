@@ -360,7 +360,7 @@ func TestMachineLifecycle(t *testing.T) {
 	// Test reset
 	machine.Start("init")
 	machine.SendEvent("activate")
-	
+
 	err = machine.Reset()
 	if err != nil {
 		t.Fatalf("Failed to reset machine: %v", err)

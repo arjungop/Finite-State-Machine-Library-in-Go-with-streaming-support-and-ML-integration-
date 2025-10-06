@@ -33,14 +33,14 @@ type FormalLanguageAI struct {
 // NewFormalLanguageAI creates the complete AI system
 func NewFormalLanguageAI() *FormalLanguageAI {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	streamConfig := fsm.StreamConfig{
 		BufferSize:    200,
 		RetryAttempts: 5,
 		RetryDelay:    time.Second,
 		Timeout:       30 * time.Second,
 	}
-	
+
 	return &FormalLanguageAI{
 		configLoader:     fsm.NewConfigLoader(),
 		nlParser:         fsm.NewNaturalLanguageParser(),
@@ -57,57 +57,56 @@ func NewFormalLanguageAI() *FormalLanguageAI {
 // Start initializes and starts the complete AI system
 func (fla *FormalLanguageAI) Start() error {
 	log.Println("Starting Formal Language-Based Self-Programming AI Framework")
-	
+
 	// Start web visualization server
 	go func() {
-	log.Println("Starting web visualization server on port 8080...")
+		log.Println("Starting web visualization server on port 8080...")
 		if err := fla.visualizationSvr.Start(); err != nil {
 			log.Printf("Visualization server error: %v", err)
 		}
 	}()
-	
+
 	// Wait for server to start
 	time.Sleep(2 * time.Second)
-	
+
 	// Create core system FSMs
 	if err := fla.createCoreSystems(); err != nil {
 		return fmt.Errorf("failed to create core systems: %w", err)
 	}
-	
+
 	// Load configuration-based FSMs
 	if err := fla.loadConfiguredFSMs(); err != nil {
 		log.Printf("Warning: failed to load some configured FSMs: %v", err)
 	}
-	
+
 	// Create example FSMs from natural language
 	if err := fla.createNaturalLanguageFSMs(); err != nil {
 		log.Printf("Warning: failed to create some NL FSMs: %v", err)
 	}
-	
+
 	// Start autonomous operations
 	fla.startAutonomousOperations()
-	
+
 	// Start ML training
 	fla.startMLTraining()
-	
+
 	log.Println("Formal Language AI system fully operational")
 	log.Println("Web dashboard: http://localhost:8080")
 	log.Println("ML-assisted optimization: Active")
 	log.Println("Event streaming: Active")
 	log.Println("Dynamic configuration: Ready")
-	
+
 	return nil
 }
 
 // createCoreSystems creates the fundamental system FSMs
 func (fla *FormalLanguageAI) createCoreSystems() error {
 	log.Println("Creating core system FSMs...")
-	
+
 	// System Monitor FSM
 	systemMonitor, err := fsm.NewBuilderWithHooks().
 		AddStates("initializing", "monitoring", "analyzing", "optimizing", "alerting", "maintenance").
 		AddEvents("start_monitoring", "analyze", "optimize", "alert", "maintain", "reset").
-		
 		AddTransitionWithAction("initializing", "start_monitoring", "monitoring",
 			func(from, to fsm.State, event fsm.Event, context fsm.Context) error {
 				log.Printf("Transition: %s -> %s on %s", from, to, event)
@@ -124,24 +123,22 @@ func (fla *FormalLanguageAI) createCoreSystems() error {
 		AddTransition("alerting", "maintain", "maintenance").
 		AddTransition("maintenance", "reset", "monitoring").
 		AddTransition("optimizing", "reset", "monitoring").
-		
 		SetInitialState("initializing").
 		Build()
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create system monitor: %w", err)
 	}
-	
+
 	// Add hooks after creation
 	systemMonitor.AddHook(fsm.OnStateEnter, fla.createSystemMonitorHook())
-	
+
 	fla.registerMachine("system_monitor", systemMonitor)
-	
+
 	// Resource Manager FSM
 	resourceManager, err := fsm.NewBuilderWithHooks().
 		AddStates("idle", "allocating", "monitoring_usage", "rebalancing", "cleanup").
 		AddEvents("allocate", "monitor", "rebalance", "cleanup", "reset").
-		
 		AddTransitionWithAction("idle", "allocate", "allocating",
 			fla.createResourceAllocationAction()).
 		AddTransition("allocating", "monitor", "monitoring_usage").
@@ -150,21 +147,19 @@ func (fla *FormalLanguageAI) createCoreSystems() error {
 		AddTransition("rebalancing", "cleanup", "cleanup").
 		AddTransition("cleanup", "reset", "idle").
 		AddTransition("monitoring_usage", "reset", "idle").
-		
 		SetInitialState("idle").
 		Build()
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create resource manager: %w", err)
 	}
-	
+
 	fla.registerMachine("resource_manager", resourceManager)
-	
+
 	// Event Coordinator FSM
 	eventCoordinator, err := fsm.NewBuilderWithHooks().
 		AddStates("listening", "processing", "routing", "aggregating", "responding").
 		AddEvents("receive_event", "process", "route", "aggregate", "respond", "reset").
-		
 		AddTransition("listening", "receive_event", "processing").
 		AddTransitionWithAction("processing", "process", "routing",
 			fla.createEventProcessingAction()).
@@ -172,19 +167,18 @@ func (fla *FormalLanguageAI) createCoreSystems() error {
 		AddTransitionWithAction("aggregating", "aggregate", "responding",
 			fla.createEventAggregationAction()).
 		AddTransition("responding", "respond", "listening").
-		
 		SetInitialState("listening").
 		Build()
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create event coordinator: %w", err)
 	}
-	
+
 	// Add hooks after creation
 	eventCoordinator.AddHook(fsm.AfterTransition, fla.createEventCoordinatorHook())
-	
+
 	fla.registerMachine("event_coordinator", eventCoordinator)
-	
+
 	log.Println("✅ Core systems created successfully")
 	return nil
 }
@@ -192,7 +186,7 @@ func (fla *FormalLanguageAI) createCoreSystems() error {
 // loadConfiguredFSMs loads FSMs from configuration files
 func (fla *FormalLanguageAI) loadConfiguredFSMs() error {
 	log.Println("📁 Loading configured FSMs...")
-	
+
 	configFiles := []struct {
 		name string
 		file string
@@ -200,44 +194,44 @@ func (fla *FormalLanguageAI) loadConfiguredFSMs() error {
 		{"smart_device", "configs/smart_device.yaml"},
 		{"autonomous_vehicle", "configs/autonomous_vehicle.json"},
 	}
-	
+
 	for _, cfg := range configFiles {
 		if _, err := os.Stat(cfg.file); os.IsNotExist(err) {
 			log.Printf("⚠️  Configuration file not found: %s", cfg.file)
 			continue
 		}
-		
+
 		var config *fsm.ConfigMachine
 		var err error
-		
+
 		if strings.HasSuffix(cfg.file, ".yaml") {
 			config, err = fla.configLoader.LoadFromYAML(cfg.file)
 		} else {
 			config, err = fla.configLoader.LoadFromJSON(cfg.file)
 		}
-		
+
 		if err != nil {
 			log.Printf("⚠️  Failed to load %s: %v", cfg.file, err)
 			continue
 		}
-		
+
 		machine, err := fla.configLoader.BuildMachine(config)
 		if err != nil {
 			log.Printf("⚠️  Failed to build %s: %v", cfg.name, err)
 			continue
 		}
-		
+
 		fla.registerMachine(cfg.name, machine)
 		log.Printf("✅ Loaded %s from %s", cfg.name, cfg.file)
 	}
-	
+
 	return nil
 }
 
 // createNaturalLanguageFSMs creates FSMs from natural language descriptions
 func (fla *FormalLanguageAI) createNaturalLanguageFSMs() error {
 	log.Println("🗣️  Creating FSMs from natural language...")
-	
+
 	examples := []struct {
 		name        string
 		description string
@@ -270,24 +264,24 @@ func (fla *FormalLanguageAI) createNaturalLanguageFSMs() error {
 			 From connected to offline when disconnect`,
 		},
 	}
-	
+
 	for _, example := range examples {
 		config, err := fla.nlParser.ParseDescription(example.description)
 		if err != nil {
 			log.Printf("⚠️  Failed to parse %s: %v", example.name, err)
 			continue
 		}
-		
+
 		machine, err := fla.configLoader.BuildMachine(config)
 		if err != nil {
 			log.Printf("⚠️  Failed to build %s: %v", example.name, err)
 			continue
 		}
-		
+
 		fla.registerMachine(example.name, machine)
 		log.Printf("✅ Created %s from natural language", example.name)
 	}
-	
+
 	return nil
 }
 
@@ -296,7 +290,7 @@ func (fla *FormalLanguageAI) registerMachine(name string, machine fsm.Machine) {
 	fla.machines[name] = machine
 	fla.visualizationSvr.RegisterMachine(name, machine)
 	fla.mlAssistant.AttachToMachine(machine)
-	
+
 	// Create distributed FSM wrapper
 	dfsm := fsm.NewDistributedFSM(name, machine, fla.eventStreamer)
 	fla.distributedFSMs[name] = dfsm
@@ -305,11 +299,11 @@ func (fla *FormalLanguageAI) registerMachine(name string, machine fsm.Machine) {
 // startAutonomousOperations begins autonomous system operations
 func (fla *FormalLanguageAI) startAutonomousOperations() {
 	log.Println("🤖 Starting autonomous operations...")
-	
+
 	for name, machine := range fla.machines {
 		go fla.runAutonomousMachine(name, machine)
 	}
-	
+
 	// Start distributed event coordination
 	go fla.runDistributedCoordination()
 }
@@ -318,7 +312,7 @@ func (fla *FormalLanguageAI) startAutonomousOperations() {
 func (fla *FormalLanguageAI) runAutonomousMachine(name string, machine fsm.Machine) {
 	ticker := time.NewTicker(time.Duration(1000+rand.Intn(2000)) * time.Millisecond)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-fla.ctx.Done():
@@ -327,19 +321,19 @@ func (fla *FormalLanguageAI) runAutonomousMachine(name string, machine fsm.Machi
 			if !machine.IsRunning() {
 				continue
 			}
-			
+
 			validEvents := machine.GetValidEvents()
 			if len(validEvents) == 0 {
 				continue
 			}
-			
+
 			// Get ML prediction
 			prediction := fla.mlAssistant.PredictNextTransition(
 				machine.CurrentState(),
 				validEvents,
 				machine.GetContext(),
 			)
-			
+
 			// Use ML recommendation with some randomness for exploration
 			var eventToSend fsm.Event
 			if prediction.Confidence > 0.6 && rand.Float64() > 0.2 {
@@ -347,12 +341,12 @@ func (fla *FormalLanguageAI) runAutonomousMachine(name string, machine fsm.Machi
 			} else {
 				eventToSend = validEvents[rand.Intn(len(validEvents))]
 			}
-			
+
 			// Send event
 			if _, err := machine.SendEvent(eventToSend); err != nil {
 				log.Printf("Error sending event %s to %s: %v", eventToSend, name, err)
 			}
-			
+
 			// Occasionally trigger distributed events
 			if rand.Float64() < 0.1 {
 				fla.triggerDistributedEvent(name)
@@ -365,7 +359,7 @@ func (fla *FormalLanguageAI) runAutonomousMachine(name string, machine fsm.Machi
 func (fla *FormalLanguageAI) runDistributedCoordination() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-fla.ctx.Done():
@@ -377,7 +371,7 @@ func (fla *FormalLanguageAI) runDistributedCoordination() {
 				"active_fsms":   len(fla.machines),
 				"system_status": "operational",
 			}
-			
+
 			if err := fla.eventStreamer.BroadcastEvent("system_heartbeat", context); err != nil {
 				log.Printf("Failed to broadcast heartbeat: %v", err)
 			}
@@ -390,7 +384,7 @@ func (fla *FormalLanguageAI) triggerDistributedEvent(sourceMachine string) {
 	if len(fla.distributedFSMs) < 2 {
 		return
 	}
-	
+
 	// Pick a random target machine
 	var targets []string
 	for name := range fla.distributedFSMs {
@@ -398,24 +392,24 @@ func (fla *FormalLanguageAI) triggerDistributedEvent(sourceMachine string) {
 			targets = append(targets, name)
 		}
 	}
-	
+
 	if len(targets) == 0 {
 		return
 	}
-	
+
 	targetMachine := targets[rand.Intn(len(targets))]
 	dfsm := fla.distributedFSMs[sourceMachine]
-	
+
 	// Send a coordination event
 	context := map[string]interface{}{
 		"coordination_request": true,
-		"source_state":        string(dfsm.CurrentState()),
-		"timestamp":          time.Now().Unix(),
+		"source_state":         string(dfsm.CurrentState()),
+		"timestamp":            time.Now().Unix(),
 	}
-	
+
 	events := []string{"coordinate", "sync", "update", "notify"}
 	event := events[rand.Intn(len(events))]
-	
+
 	if err := dfsm.SendDistributedEvent(event, targetMachine, context); err != nil {
 		log.Printf("Failed to send distributed event: %v", err)
 	}
@@ -424,15 +418,15 @@ func (fla *FormalLanguageAI) triggerDistributedEvent(sourceMachine string) {
 // startMLTraining begins continuous ML training
 func (fla *FormalLanguageAI) startMLTraining() {
 	log.Println("🧠 Starting ML training and optimization...")
-	
+
 	// Train from any existing historical data
 	fla.mlAssistant.TrainFromHistory()
-	
+
 	// Periodic optimization
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
-		
+
 		for {
 			select {
 			case <-fla.ctx.Done():
@@ -448,7 +442,7 @@ func (fla *FormalLanguageAI) startMLTraining() {
 func (fla *FormalLanguageAI) performMLOptimization() {
 	for name := range fla.machines {
 		suggestions := fla.mlAssistant.OptimizeMachine(fla.machines[name])
-		
+
 		if len(suggestions) > 0 {
 			log.Printf("🧠 ML suggestions for %s:", name)
 			for i, suggestion := range suggestions {
@@ -460,7 +454,7 @@ func (fla *FormalLanguageAI) performMLOptimization() {
 			}
 		}
 	}
-	
+
 	// Retrain neural network periodically
 	fla.mlAssistant.TrainFromHistory()
 }
@@ -526,15 +520,15 @@ func (fla *FormalLanguageAI) createEventAggregationAction() fsm.TransitionAction
 func (fla *FormalLanguageAI) createSystemMonitorHook() fsm.Hook {
 	return func(result fsm.TransitionResult, context fsm.Context) {
 		log.Printf("📊 System Monitor: %s -> %s", result.FromState, result.ToState)
-		
+
 		// Auto-trigger next operations
 		switch string(result.ToState) {
 		case "monitoring":
 			go func() {
 				time.Sleep(2 * time.Second)
 				context.Set("performance_data", map[string]interface{}{
-					"cpu_usage":    rand.Float64(),
-					"memory_usage": rand.Float64(),
+					"cpu_usage":     rand.Float64(),
+					"memory_usage":  rand.Float64(),
 					"response_time": rand.Intn(1000),
 				})
 				if machine, ok := fla.machines["system_monitor"]; ok {
@@ -566,20 +560,20 @@ func (fla *FormalLanguageAI) createEventCoordinatorHook() fsm.Hook {
 // Stop gracefully shuts down the AI system
 func (fla *FormalLanguageAI) Stop() error {
 	log.Println("🛑 Shutting down Formal Language AI system...")
-	
+
 	fla.cancel()
-	
+
 	// Stop event streamer
 	if err := fla.eventStreamer.Close(); err != nil {
 		log.Printf("Error closing event streamer: %v", err)
 	}
-	
+
 	// Stop all machines
 	for name, machine := range fla.machines {
 		log.Printf("Stopping machine: %s", name)
 		machine.Stop()
 	}
-	
+
 	log.Println("System shutdown complete")
 	return nil
 }
@@ -588,13 +582,13 @@ func (fla *FormalLanguageAI) Stop() error {
 func (fla *FormalLanguageAI) ShowStatus() {
 	fmt.Println("\nFORMAL LANGUAGE AI SYSTEM STATUS")
 	fmt.Println("================================")
-    
+
 	fmt.Printf("Active Machines: %d\n", len(fla.machines))
 	fmt.Printf("Distributed FSMs: %d\n", len(fla.distributedFSMs))
 	fmt.Printf("ML Assistant: Active\n")
 	fmt.Printf("Event Streaming: Active\n")
 	fmt.Printf("Web Dashboard: http://localhost:8080\n")
-    
+
 	fmt.Println("\nMachine States:")
 	for name, machine := range fla.machines {
 		status := "Running"
@@ -603,52 +597,52 @@ func (fla *FormalLanguageAI) ShowStatus() {
 		}
 		fmt.Printf("  %s: %s (State: %s)\n", name, status, machine.CurrentState())
 	}
-	
+
 	// ML Statistics
 	stats := fla.mlAssistant.GetLearningStats()
 	fmt.Println("\nML Learning Statistics:")
 	for key, value := range stats {
 		fmt.Printf("  %s: %v\n", key, value)
 	}
-	
+
 	fmt.Println()
 }
 
 // Interactive CLI
 func (fla *FormalLanguageAI) RunInteractiveCLI() {
 	scanner := bufio.NewScanner(os.Stdin)
-	
+
 	fmt.Println("\nFORMAL LANGUAGE AI - INTERACTIVE MODE")
 	fmt.Println("Commands: status, optimize, create <name>, start <name>, stop <name>, help, quit")
-	
+
 	for {
 		fmt.Print("\nFLA> ")
 		if !scanner.Scan() {
 			break
 		}
-		
+
 		command := strings.TrimSpace(scanner.Text())
 		parts := strings.Fields(command)
-		
+
 		if len(parts) == 0 {
 			continue
 		}
-		
+
 		switch parts[0] {
 		case "status":
 			fla.ShowStatus()
-			
+
 		case "optimize":
 			log.Println("Running manual optimization...")
 			fla.performMLOptimization()
-			
+
 		case "create":
 			if len(parts) < 2 {
 				fmt.Println("Usage: create <fsm_name>")
 				continue
 			}
 			fla.createInteractiveFSM(parts[1])
-			
+
 		case "start":
 			if len(parts) < 2 {
 				fmt.Println("Usage: start <machine_name>")
@@ -663,7 +657,7 @@ func (fla *FormalLanguageAI) RunInteractiveCLI() {
 			} else {
 				fmt.Printf("Machine not found: %s\n", parts[1])
 			}
-			
+
 		case "stop":
 			if len(parts) < 2 {
 				fmt.Println("Usage: stop <machine_name>")
@@ -675,7 +669,7 @@ func (fla *FormalLanguageAI) RunInteractiveCLI() {
 			} else {
 				fmt.Printf("Machine not found: %s\n", parts[1])
 			}
-			
+
 		case "help":
 			fmt.Println("Available commands:")
 			fmt.Println("  status           - Show system status")
@@ -685,10 +679,10 @@ func (fla *FormalLanguageAI) RunInteractiveCLI() {
 			fmt.Println("  stop <name>      - Stop a machine")
 			fmt.Println("  help             - Show this help")
 			fmt.Println("  quit             - Exit interactive mode")
-			
+
 		case "quit", "exit":
 			return
-			
+
 		default:
 			fmt.Printf("Unknown command: %s (type 'help' for commands)\n", parts[0])
 		}
@@ -699,58 +693,58 @@ func (fla *FormalLanguageAI) RunInteractiveCLI() {
 func (fla *FormalLanguageAI) createInteractiveFSM(name string) {
 	fmt.Printf("Creating FSM: %s\n", name)
 	fmt.Print("Enter natural language description: ")
-	
+
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		return
 	}
-	
+
 	description := scanner.Text()
 	config, err := fla.nlParser.ParseDescription(description)
 	if err != nil {
 		fmt.Printf("❌ Failed to parse description: %v\n", err)
 		return
 	}
-	
+
 	machine, err := fla.configLoader.BuildMachine(config)
 	if err != nil {
 		fmt.Printf("❌ Failed to build machine: %v\n", err)
 		return
 	}
-	
+
 	fla.registerMachine(name, machine)
 	fmt.Printf("✅ Created and registered FSM: %s\n", name)
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	
+
 	fmt.Println("FORMAL LANGUAGE-BASED SELF-PROGRAMMING AI FRAMEWORK")
 	fmt.Println("    Complete 100% Implementation")
 	fmt.Println("====================================================")
-	
+
 	// Create the AI system
 	fla := NewFormalLanguageAI()
-	
+
 	// Setup graceful shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-	fmt.Println("\nReceived shutdown signal...")
+		fmt.Println("\nReceived shutdown signal...")
 		fla.Stop()
 		os.Exit(0)
 	}()
-	
+
 	// Start the system
 	if err := fla.Start(); err != nil {
 		log.Fatalf("Failed to start AI system: %v", err)
 	}
-	
+
 	// Show initial status
 	time.Sleep(3 * time.Second)
 	fla.ShowStatus()
-	
+
 	// Run interactive CLI
 	fla.RunInteractiveCLI()
 }

@@ -23,30 +23,30 @@ type VendingMachine struct {
 type VendingEvent string
 
 const (
-	InsertCoin      VendingEvent = "insert_coin"
-	SelectProduct   VendingEvent = "select_product"
-	ConfirmPurchase VendingEvent = "confirm_purchase"
-	DispenseProduct VendingEvent = "dispense_product"
-	ReturnChange    VendingEvent = "return_change"
-	CancelOrder     VendingEvent = "cancel_order"
-	RefillMachine   VendingEvent = "refill_machine"
-	ServiceMachine  VendingEvent = "service_machine"
+	InsertCoin         VendingEvent = "insert_coin"
+	SelectProduct      VendingEvent = "select_product"
+	ConfirmPurchase    VendingEvent = "confirm_purchase"
+	DispenseProduct    VendingEvent = "dispense_product"
+	ReturnChange       VendingEvent = "return_change"
+	CancelVendingOrder VendingEvent = "cancel_order"
+	RefillMachine      VendingEvent = "refill_machine"
+	ServiceMachine     VendingEvent = "service_machine"
 )
 
 // VendingState represents states in the vending machine system
 type VendingState string
 
 const (
-	Idle           VendingState = "idle"
-	CoinInserted   VendingState = "coin_inserted"
+	Idle            VendingState = "idle"
+	CoinInserted    VendingState = "coin_inserted"
 	ProductSelected VendingState = "product_selected"
 	PaymentComplete VendingState = "payment_complete"
-	Dispensing     VendingState = "dispensing"
-	Dispensed      VendingState = "dispensed"
+	Dispensing      VendingState = "dispensing"
+	Dispensed       VendingState = "dispensed"
 	ReturningChange VendingState = "returning_change"
-	OutOfStock     VendingState = "out_of_stock"
-	ServiceMode    VendingState = "service_mode"
-	Error          VendingState = "error"
+	OutOfStock      VendingState = "out_of_stock"
+	ServiceMode     VendingState = "service_mode"
+	Error           VendingState = "error"
 )
 
 // Product represents a vending machine product
@@ -59,7 +59,7 @@ type Product struct {
 // NewVendingMachine creates a new autonomous vending machine
 func NewVendingMachine(machineID string) *VendingMachine {
 	logger := log.New(log.Writer(), fmt.Sprintf("[Vending %s] ", machineID), log.LstdFlags)
-	
+
 	// Initialize inventory
 	inventory := map[string]int{
 		"A1": 10, // Soda - $1.50
@@ -68,14 +68,14 @@ func NewVendingMachine(machineID string) *VendingMachine {
 		"B2": 3,  // Candy - $1.25
 		"C1": 0,  // Gum - $0.75 (out of stock)
 	}
-	
+
 	vm := &VendingMachine{
 		machineID: machineID,
 		inventory: inventory,
 		balance:   0.0,
 		logger:    logger,
 	}
-	
+
 	// Build the self-programming FSM using declarative rules
 	machine, err := fsm.NewBuilderWithHooks().
 		// Define vending machine states
@@ -98,7 +98,7 @@ func NewVendingMachine(machineID string) *VendingMachine {
 			fsm.Event(ConfirmPurchase),
 			fsm.Event(DispenseProduct),
 			fsm.Event(ReturnChange),
-			fsm.Event(CancelOrder),
+			fsm.Event(CancelVendingOrder),
 			fsm.Event(RefillMachine),
 			fsm.Event(ServiceMachine),
 		).
@@ -141,15 +141,15 @@ func NewVendingMachine(machineID string) *VendingMachine {
 		).
 		// Add cancellation paths
 		AddTransitionWithAction(
-			fsm.State(CoinInserted), fsm.Event(CancelOrder), fsm.State(ReturningChange),
+			fsm.State(CoinInserted), fsm.Event(CancelVendingOrder), fsm.State(ReturningChange),
 			vm.createCancelAction(),
 		).
 		AddTransitionWithAction(
-			fsm.State(ProductSelected), fsm.Event(CancelOrder), fsm.State(ReturningChange),
+			fsm.State(ProductSelected), fsm.Event(CancelVendingOrder), fsm.State(ReturningChange),
 			vm.createCancelAction(),
 		).
 		AddTransitionWithAction(
-			fsm.State(OutOfStock), fsm.Event(CancelOrder), fsm.State(ReturningChange),
+			fsm.State(OutOfStock), fsm.Event(CancelVendingOrder), fsm.State(ReturningChange),
 			vm.createCancelAction(),
 		).
 		// Add service mode transitions
@@ -169,20 +169,20 @@ func NewVendingMachine(machineID string) *VendingMachine {
 		AddOnTransitionErrorHook(vm.createErrorHook()).
 		SetInitialState(fsm.State(Idle)).
 		Build()
-	
+
 	if err != nil {
 		panic(fmt.Sprintf("Failed to build vending machine FSM: %v", err))
 	}
-	
+
 	vm.machine = machine
-	
+
 	// Initialize context with machine data
 	context := vm.machine.GetContext()
 	context.Set("machine_id", machineID)
 	context.Set("total_sales", 0.0)
 	context.Set("transaction_count", 0)
 	context.Set("last_service", time.Now())
-	
+
 	return vm
 }
 
@@ -205,7 +205,7 @@ func (vm *VendingMachine) createCoinInsertAction() fsm.TransitionAction {
 		// Simulate coin value (random between quarters and dollars)
 		coinValue := []float64{0.25, 0.50, 1.00}[time.Now().UnixNano()%3]
 		vm.balance += coinValue
-		
+
 		context.Set("current_balance", vm.balance)
 		vm.logger.Printf("Coin inserted: $%.2f (Total: $%.2f)", coinValue, vm.balance)
 		return nil
@@ -219,21 +219,21 @@ func (vm *VendingMachine) createProductSelectionCondition() fsm.TransitionCondit
 		if productCode == nil {
 			return false
 		}
-		
+
 		code := productCode.(string)
 		inventory := vm.inventory[code]
-		
+
 		// Product must be in stock
 		if inventory <= 0 {
 			return false
 		}
-		
+
 		// Check if user has enough money
 		products := vm.getProducts()
 		if product, exists := products[code]; exists {
 			return vm.balance >= product.Price
 		}
-		
+
 		return false
 	}
 }
@@ -245,7 +245,7 @@ func (vm *VendingMachine) createOutOfStockCondition() fsm.TransitionCondition {
 		if productCode == nil {
 			return false
 		}
-		
+
 		code := productCode.(string)
 		inventory := vm.inventory[code]
 		return inventory <= 0
@@ -257,7 +257,7 @@ func (vm *VendingMachine) createPaymentCondition() fsm.TransitionCondition {
 	return func(context fsm.Context) bool {
 		productCode := context.Get("selected_product").(string)
 		products := vm.getProducts()
-		
+
 		if product, exists := products[productCode]; exists {
 			sufficient := vm.balance >= product.Price
 			if sufficient {
@@ -276,20 +276,20 @@ func (vm *VendingMachine) createDispenseAction() fsm.TransitionAction {
 		productCode := context.Get("selected_product").(string)
 		productPrice := context.Get("product_price").(float64)
 		productName := context.Get("product_name").(string)
-		
+
 		vm.logger.Printf("Dispensing %s (Code: %s, Price: $%.2f)", productName, productCode, productPrice)
-		
+
 		// Deduct from balance
 		vm.balance -= productPrice
 		context.Set("current_balance", vm.balance)
-		
+
 		// Update sales tracking
 		totalSales := context.Get("total_sales").(float64)
 		context.Set("total_sales", totalSales+productPrice)
-		
+
 		transactionCount := context.Get("transaction_count").(int)
 		context.Set("transaction_count", transactionCount+1)
-		
+
 		return nil
 	}
 }
@@ -299,18 +299,18 @@ func (vm *VendingMachine) createDispenseCompleteAction() fsm.TransitionAction {
 	return func(from, to fsm.State, event fsm.Event, context fsm.Context) error {
 		productCode := context.Get("selected_product").(string)
 		productName := context.Get("product_name").(string)
-		
+
 		// Update inventory
 		vm.inventory[productCode]--
 		context.Set("inventory_"+productCode, vm.inventory[productCode])
-		
+
 		vm.logger.Printf("Product dispensed: %s (Remaining: %d)", productName, vm.inventory[productCode])
-		
+
 		// Check if product is now out of stock
 		if vm.inventory[productCode] == 0 {
 			vm.logger.Printf("WARNING: Product %s is now out of stock", productCode)
 		}
-		
+
 		return nil
 	}
 }
@@ -356,13 +356,13 @@ func (vm *VendingMachine) createCancelAction() fsm.TransitionAction {
 func (vm *VendingMachine) createRefillAction() fsm.TransitionAction {
 	return func(from, to fsm.State, event fsm.Event, context fsm.Context) error {
 		vm.logger.Printf("Refilling machine inventory")
-		
+
 		// Refill all products to maximum capacity
 		for code := range vm.inventory {
 			vm.inventory[code] = 10
 			context.Set("inventory_"+code, 10)
 		}
-		
+
 		context.Set("last_service", time.Now())
 		vm.logger.Printf("Machine refilled successfully")
 		return nil
@@ -385,7 +385,7 @@ func (vm *VendingMachine) resetTransaction(context fsm.Context) {
 func (vm *VendingMachine) createStateEnterHook() fsm.Hook {
 	return func(result fsm.TransitionResult, context fsm.Context) {
 		vm.logger.Printf("State: %s", result.ToState)
-		
+
 		// Autonomous behavior based on state
 		switch VendingState(result.ToState) {
 		case Dispensing:
@@ -409,7 +409,7 @@ func (vm *VendingMachine) createStateEnterHook() fsm.Hook {
 // createTransitionHook creates a hook that logs transitions
 func (vm *VendingMachine) createTransitionHook() fsm.Hook {
 	return func(result fsm.TransitionResult, context fsm.Context) {
-		vm.logger.Printf("Transition: %s -> %s (Event: %s)", 
+		vm.logger.Printf("Transition: %s -> %s (Event: %s)",
 			result.FromState, result.ToState, result.Event)
 	}
 }
@@ -418,7 +418,7 @@ func (vm *VendingMachine) createTransitionHook() fsm.Hook {
 func (vm *VendingMachine) createErrorHook() fsm.Hook {
 	return func(result fsm.TransitionResult, context fsm.Context) {
 		vm.logger.Printf("Error: %v", result.Error)
-		
+
 		// Autonomous error recovery
 		if result.Error != nil {
 			vm.logger.Printf("Attempting error recovery...")
@@ -439,12 +439,12 @@ func (vm *VendingMachine) SelectProduct(productCode string) error {
 	context := vm.machine.GetContext()
 	context.Set("selected_product", productCode)
 	vm.selectedProduct = productCode
-	
+
 	products := vm.getProducts()
 	if product, exists := products[productCode]; exists {
 		vm.logger.Printf("Product selected: %s (Price: $%.2f)", product.Name, product.Price)
 	}
-	
+
 	_, err := vm.machine.SendEvent(fsm.Event(SelectProduct))
 	return err
 }
@@ -457,7 +457,7 @@ func (vm *VendingMachine) ConfirmPurchase() error {
 
 // CancelTransaction cancels the current transaction
 func (vm *VendingMachine) CancelTransaction() error {
-	_, err := vm.machine.SendEvent(fsm.Event(CancelOrder))
+	_, err := vm.machine.SendEvent(fsm.Event(CancelVendingOrder))
 	return err
 }
 
@@ -499,11 +499,11 @@ func (vm *VendingMachine) GetInventory() map[string]int {
 
 // Example usage function
 func demonstrateVendingMachine() {
-	fmt.Println("=== Autonomous Vending Machine Controller Demo ===\n")
-	
+	fmt.Println("=== Autonomous Vending Machine Controller Demo ===")
+
 	// Create autonomous vending machine
 	vm := NewVendingMachine("VM-001")
-	
+
 	fmt.Println("Machine initialized. Available products:")
 	products := vm.getProducts()
 	for code, product := range products {
@@ -514,52 +514,52 @@ func demonstrateVendingMachine() {
 		}
 		fmt.Printf("  %s: %s - $%.2f (%s)\n", code, product.Name, product.Price, status)
 	}
-	
+
 	fmt.Println("\n=== Transaction 1: Successful Purchase ===")
 	// Insert coins
 	vm.InsertCoin() // Random amount
 	vm.InsertCoin() // Add more
-	
+
 	// Select and purchase product
 	vm.SelectProduct("A2") // Water - $1.00
 	time.Sleep(100 * time.Millisecond)
 	vm.ConfirmPurchase()
-	
+
 	time.Sleep(500 * time.Millisecond)
 	fmt.Printf("Transaction 1 complete. State: %s\n", vm.GetCurrentState())
-	
+
 	fmt.Println("\n=== Transaction 2: Out of Stock ===")
 	vm.InsertCoin()
 	vm.SelectProduct("C1") // Gum - out of stock
 	time.Sleep(100 * time.Millisecond)
-	
+
 	if vm.GetCurrentState() == OutOfStock {
 		fmt.Println("Product out of stock, canceling...")
 		vm.CancelTransaction()
 	}
-	
+
 	time.Sleep(300 * time.Millisecond)
 	fmt.Printf("Transaction 2 complete. State: %s\n", vm.GetCurrentState())
-	
+
 	fmt.Println("\n=== Service Mode Demo ===")
 	vm.ServiceMode()
 	vm.RefillMachine()
 	vm.ServiceMode() // Exit service mode
-	
+
 	fmt.Printf("After service. Current inventory:\n")
 	inventory := vm.GetInventory()
 	for code, count := range inventory {
 		fmt.Printf("  %s: %d units\n", code, count)
 	}
-	
+
 	fmt.Println("\n=== Transaction 3: After Refill ===")
 	vm.InsertCoin()
 	vm.SelectProduct("C1") // Gum - now available
 	time.Sleep(100 * time.Millisecond)
 	vm.ConfirmPurchase()
-	
+
 	time.Sleep(500 * time.Millisecond)
-	
+
 	// Display final status
 	fmt.Printf("\nFinal machine state: %s\n", vm.GetCurrentState())
 	status := vm.GetStatus()
