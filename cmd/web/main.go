@@ -71,7 +71,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("� Starting FSM Web Server on port %d\n", port)
+	fmt.Printf("Starting FSM Web Server on port %d\n", port)
 
 	server := web.NewAdvancedVisualizationServer(port)
 

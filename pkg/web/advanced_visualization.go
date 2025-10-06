@@ -174,15 +174,26 @@ func (avs *AdvancedVisualizationServer) handleDashboard(w http.ResponseWriter, r
             container.innerHTML = '';
             machines.forEach(machine => {
                 const div = document.createElement('div');
-                div.className = 'machine ' + (machine.is_running ? 'running' : 'stopped');
-                div.innerHTML = ` + "`" + `
-                    <h3>" + machine.name + "</h3>
-                    <div class="state">State: " + machine.current_state + "</div>
-                    <div class="events">Valid Events: " + machine.valid_events.join(', ') + "</div>
-                    <div>Running: " + (machine.is_running ? 'Yes' : 'No') + "</div>
-                    <div>Last Update: " + new Date(machine.last_update).toLocaleString() + "</div>
-                ` + "`" + `;
-                container.appendChild(div);
+                    div.className = 'machine ' + (machine.is_running ? 'running' : 'stopped');
+                    const title = document.createElement('h3');
+                    title.textContent = machine.name;
+                    const state = document.createElement('div');
+                    state.className = 'state';
+                    state.textContent = 'State: ' + machine.current_state;
+                    const eventsEl = document.createElement('div');
+                    eventsEl.className = 'events';
+                    eventsEl.textContent = 'Valid Events: ' + (machine.valid_events || []).join(', ');
+                    const runningEl = document.createElement('div');
+                    runningEl.textContent = 'Running: ' + (machine.is_running ? 'Yes' : 'No');
+                    const updatedEl = document.createElement('div');
+                    try { updatedEl.textContent = 'Last Update: ' + new Date(machine.last_update).toLocaleString(); } catch(e) { updatedEl.textContent = 'Last Update: -'; }
+
+                    div.appendChild(title);
+                    div.appendChild(state);
+                    div.appendChild(eventsEl);
+                    div.appendChild(runningEl);
+                    div.appendChild(updatedEl);
+                    container.appendChild(div);
             });
         }
         function updateMetrics(machines, metrics){
