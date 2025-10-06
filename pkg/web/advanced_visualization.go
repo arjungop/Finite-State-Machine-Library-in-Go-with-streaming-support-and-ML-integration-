@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,15 +14,14 @@ import (
 )
 
 // AdvancedVisualizationServer provides comprehensive FSM visualization and design tools
+// Simplified version without ML dependencies for clean FSM management
 type AdvancedVisualizationServer struct {
-	port           int
-	machines       map[string]fsm.Machine
-	loader         *fsm.ConfigLoader
-	parser         *fsm.NaturalLanguageParser
-	streamer       *fsm.EventStreamer
-	history        map[string][]TransitionHistory
-	mu             sync.RWMutex
-	designSessions map[string]*DesignSession
+	port           int                            // HTTP server port number
+	machines       map[string]fsm.Machine         // Collection of FSM instances by name
+	history        map[string][]TransitionHistory // Transition history for each machine
+	mu             sync.RWMutex                   // Thread-safe access to server state
+	streamer       *fsm.EventStreamer             // Optional event streamer for distributed events
+	designSessions map[string]*DesignSession      // Active FSM design sessions
 }
 
 // DesignSession represents an FSM design session
@@ -76,16 +76,16 @@ type RealTimeMetrics struct {
 	LastUpdated          time.Time      `json:"last_updated"`
 }
 
-// NewAdvancedVisualizationServer creates an enhanced visualization server
+// NewAdvancedVisualizationServer creates a simplified visualization server
+// Returns a server instance without ML dependencies for lightweight operation
 func NewAdvancedVisualizationServer(port int) *AdvancedVisualizationServer {
 	return &AdvancedVisualizationServer{
-		port:           port,
-		machines:       make(map[string]fsm.Machine),
-		loader:         fsm.NewConfigLoader(),
-		parser:         fsm.NewNaturalLanguageParser(),
+		port:     port,                                 // Set HTTP server port
+		machines: make(map[string]fsm.Machine),         // Initialize empty machine collection
+		history:  make(map[string][]TransitionHistory), // Initialize empty history tracking
+		// Initialize a default in-process event streamer with sane defaults
 		streamer:       fsm.NewEventStreamer(fsm.StreamConfig{}),
-		history:        make(map[string][]TransitionHistory),
-		designSessions: make(map[string]*DesignSession),
+		designSessions: make(map[string]*DesignSession), // Initialize empty design sessions
 	}
 }
 
@@ -97,19 +97,16 @@ func (avs *AdvancedVisualizationServer) Start() error {
 	mux.HandleFunc("/", avs.handleDashboard)
 	mux.HandleFunc("/designer", avs.handleDesigner)
 	mux.HandleFunc("/analyzer", avs.handleAnalyzer)
-	mux.HandleFunc("/streaming", avs.handleStreaming)
 
-	// API endpoints
-	mux.HandleFunc("/api/machines", avs.handleMachinesAPI)
-	mux.HandleFunc("/api/machines/", avs.handleMachineAPI)
-	mux.HandleFunc("/api/design/sessions", avs.handleDesignSessionsAPI)
-	mux.HandleFunc("/api/design/sessions/", avs.handleDesignSessionAPI)
-	mux.HandleFunc("/api/parse/natural", avs.handleNaturalLanguageAPI)
-	mux.HandleFunc("/api/metrics", avs.handleMetricsAPI)
-	mux.HandleFunc("/api/streaming/events", avs.handleStreamingEventsAPI)
+	// API endpoints - simplified without ML dependencies
+	mux.HandleFunc("/api/machines", avs.handleMachinesAPI)              // Machine management API
+	mux.HandleFunc("/api/machines/", avs.handleMachineAPI)              // Individual machine operations
+	mux.HandleFunc("/api/design/sessions", avs.handleDesignSessionsAPI) // Design session management
+	mux.HandleFunc("/api/design/sessions/", avs.handleDesignSessionAPI) // Individual session operations
+	mux.HandleFunc("/api/metrics", avs.handleMetricsAPI)                // Basic performance metrics
 
-	log.Printf("Advanced visualization server starting on port %d", avs.port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", avs.port), mux)
+	log.Printf("Simplified visualization server starting on port %d", avs.port) // Log server startup
+	return http.ListenAndServe(fmt.Sprintf(":%d", avs.port), mux)               // Start HTTP server
 }
 
 // handleDashboard serves the main dashboard
@@ -179,11 +176,11 @@ func (avs *AdvancedVisualizationServer) handleDashboard(w http.ResponseWriter, r
                 const div = document.createElement('div');
                 div.className = 'machine ' + (machine.is_running ? 'running' : 'stopped');
                 div.innerHTML = ` + "`" + `
-                    <h3>${machine.name}</h3>
-                    <div class="state">State: ${machine.current_state}</div>
-                    <div class="events">Valid Events: ${machine.valid_events.join(', ')}</div>
-                    <div>Running: ${machine.is_running ? 'Yes' : 'No'}</div>
-                    <div>Last Update: ${new Date(machine.last_update).toLocaleString()}</div>
+                    <h3>" + machine.name + "</h3>
+                    <div class="state">State: " + machine.current_state + "</div>
+                    <div class="events">Valid Events: " + machine.valid_events.join(', ') + "</div>
+                    <div>Running: " + (machine.is_running ? 'Yes' : 'No') + "</div>
+                    <div>Last Update: " + new Date(machine.last_update).toLocaleString() + "</div>
                 ` + "`" + `;
                 container.appendChild(div);
             });
@@ -297,7 +294,7 @@ States: idle, working, done
 Events: start, finish
 From idle to working when start
 From working to done when finish"></textarea>
-                <button onclick="parseNaturalLanguage()">Parse & Visualize</button>
+                <button onclick="designManually()">Design Manually</button>
             </div>
             
             <div class="properties">
@@ -326,20 +323,200 @@ From working to done when finish"></textarea>
         let currentDesign = { states: [], events: [], transitions: [] };
         let svg = d3.select("#design-canvas");
         
-        function parseNaturalLanguage() {
+        function designManually() {
+            // Parse natural language description
             const description = document.getElementById('nl-description').value;
-            fetch('/api/parse/natural', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ description: description })
-            })
-            .then(response => response.json())
-            .then(config => {
-                currentDesign = convertConfigToDesign(config);
+            if (!description.trim()) {
+                alert('Please enter a description of your FSM');
+                return;
+            }
+            
+            // Simple parser for the format shown in placeholder
+            const lines = description.split('\n').map(l => l.trim()).filter(l => l);
+            const states = [];
+            const events = [];
+            const transitions = [];
+            
+            lines.forEach(line => {
+                if (line.toLowerCase().startsWith('states:')) {
+                    const stateList = line.substring(7).split(',').map(s => s.trim());
+                    stateList.forEach((state, i) => {
+                        states.push({
+                            name: state,
+                            description: state,
+                            x: 100 + (i % 3) * 200,
+                            y: 100 + Math.floor(i / 3) * 150,
+                            color: '#3498db',
+                            is_initial: i === 0
+                        });
+                    });
+                } else if (line.toLowerCase().startsWith('events:')) {
+                    const eventList = line.substring(7).split(',').map(e => e.trim());
+                    eventList.forEach(event => {
+                        events.push({
+                            name: event,
+                            description: event,
+                            color: '#e74c3c'
+                        });
+                    });
+                } else if (line.toLowerCase().includes('to') && line.toLowerCase().includes('when')) {
+                    // Parse "From X to Y when Z" format
+                    const match = line.match(/from\s+(\w+)\s+to\s+(\w+)\s+when\s+(\w+)/i);
+                    if (match) {
+                        transitions.push({
+                            from: match[1],
+                            to: match[2],
+                            event: match[3],
+                            description: match[1] + " -> " + match[2] + " on " + match[3],
+                            curved: false
+                        });
+                    }
+                }
+            });
+            
+            currentDesign = { states, events, transitions };
+            visualizeDesign();
+            updateDesignInfo();
+        }
+        
+        function generateFromNL() {
+            designManually(); // Use the same logic for now
+        }
+        
+        function addState() {
+            const name = prompt('Enter state name:');
+            if (name && !currentDesign.states.find(s => s.name === name)) {
+                currentDesign.states.push({
+                    name: name,
+                    description: name,
+                    x: 100 + (currentDesign.states.length % 3) * 200,
+                    y: 100 + Math.floor(currentDesign.states.length / 3) * 150,
+                    color: '#3498db',
+                    is_initial: currentDesign.states.length === 0
+                });
                 visualizeDesign();
                 updateDesignInfo();
+            }
+        }
+        
+        function addEvent() {
+            const name = prompt('Enter event name:');
+            if (name && !currentDesign.events.find(e => e.name === name)) {
+                currentDesign.events.push({
+                    name: name,
+                    description: name,
+                    color: '#e74c3c'
+                });
+                updateDesignInfo();
+            }
+        }
+        
+        function addTransition() {
+            if (currentDesign.states.length < 2) {
+                alert('You need at least 2 states to create a transition');
+                return;
+            }
+            if (currentDesign.events.length === 0) {
+                alert('You need at least 1 event to create a transition');
+                return;
+            }
+            
+            const from = prompt('From state:', currentDesign.states[0].name);
+            const to = prompt('To state:', currentDesign.states[1].name);
+            const event = prompt('On event:', currentDesign.events[0].name);
+            
+            if (from && to && event) {
+                const fromExists = currentDesign.states.find(s => s.name === from);
+                const toExists = currentDesign.states.find(s => s.name === to);
+                const eventExists = currentDesign.events.find(e => e.name === event);
+                
+                if (fromExists && toExists && eventExists) {
+                    currentDesign.transitions.push({
+                        from: from,
+                        to: to,
+                        event: event,
+                        description: from + " -> " + to + " on " + event,
+                        curved: false
+                    });
+                    visualizeDesign();
+                    updateDesignInfo();
+                } else {
+                    alert('Invalid state or event name');
+                }
+            }
+        }
+        
+        function deployFSM() {
+            if (currentDesign.states.length === 0) {
+                alert('Design is empty - nothing to deploy');
+                return;
+            }
+            
+            const name = document.getElementById('design-name').value || ('fsm_' + Date.now());
+            
+            // Convert design to FSM config format
+            const config = {
+                name: name,
+                initial_state: currentDesign.states.find(s => s.is_initial)?.name || currentDesign.states[0].name,
+                states: currentDesign.states.map(s => ({
+                    name: s.name,
+                    description: s.description
+                })),
+                events: currentDesign.events.map(e => ({
+                    name: e.name,
+                    description: e.description
+                })),
+                transitions: currentDesign.transitions.map(t => ({
+                    from: t.from,
+                    to: t.to,
+                    event: t.event,
+                    action: t.description
+                }))
+            };
+            
+            // Deploy via API
+            fetch('/api/machines', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
             })
-            .catch(error => console.error('Error:', error));
+            .then(response => response.json())
+            .then(result => {
+                alert('FSM "' + name + '" deployed successfully!');
+                console.log('Deployed FSM:', result);
+            })
+            .catch(error => {
+                console.error('Deploy error:', error);
+                alert('Deployment failed - check console for details');
+            });
+        }
+        
+        function loadDesign() {
+            fetch('/api/design/sessions')
+            .then(response => response.json())
+            .then(sessions => {
+                if (sessions.length === 0) {
+                    alert('No saved designs found');
+                    return;
+                }
+                
+                let options = sessions.map((s, i) => i + ': ' + s.name).join('\n');
+                const choice = prompt('Choose design to load:\n' + options);
+                const index = parseInt(choice);
+                
+                if (index >= 0 && index < sessions.length) {
+                    const session = sessions[index];
+                    currentDesign = {
+                        states: session.states || [],
+                        events: session.events || [],
+                        transitions: session.transitions || []
+                    };
+                    document.getElementById('design-name').value = session.name;
+                    visualizeDesign();
+                    updateDesignInfo();
+                }
+            })
+            .catch(error => console.error('Load error:', error));
         }
         
         function convertConfigToDesign(config) {
@@ -489,33 +666,8 @@ From working to done when finish"></textarea>
 	t.Execute(w, nil)
 }
 
-// handleNaturalLanguageAPI processes natural language FSM descriptions
-func (avs *AdvancedVisualizationServer) handleNaturalLanguageAPI(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var request struct {
-		Description string `json:"description"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	config, err := avs.parser.ParseDescription(request.Description)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(config)
-}
-
 // handleDesignSessionsAPI manages design sessions
+// Provides CRUD operations for FSM design sessions without ML dependencies
 func (avs *AdvancedVisualizationServer) handleDesignSessionsAPI(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -564,31 +716,113 @@ func (avs *AdvancedVisualizationServer) RegisterMachine(name string, machine fsm
 	avs.streamer.RegisterMachine(name, machine)
 }
 
-// handleMachinesAPI provides machine information
+// handleMachinesAPI provides machine information and creates new machines
 func (avs *AdvancedVisualizationServer) handleMachinesAPI(w http.ResponseWriter, r *http.Request) {
-	avs.mu.RLock()
-	defer avs.mu.RUnlock()
+	switch r.Method {
+	case "GET":
+		avs.mu.RLock()
+		defer avs.mu.RUnlock()
 
-	var machines []MachineStatus
-	for name, machine := range avs.machines {
-		status := MachineStatus{
-			Name:         name,
-			CurrentState: string(machine.CurrentState()),
-			IsRunning:    machine.IsRunning(),
-			ValidEvents:  make([]string, 0),
-			LastUpdate:   time.Now(),
+		var machines []MachineStatus
+		for name, machine := range avs.machines {
+			status := MachineStatus{
+				Name:         name,
+				CurrentState: string(machine.CurrentState()),
+				IsRunning:    machine.IsRunning(),
+				ValidEvents:  make([]string, 0),
+				LastUpdate:   time.Now(),
+			}
+
+			// Get valid events
+			for _, event := range machine.GetValidEvents() {
+				status.ValidEvents = append(status.ValidEvents, string(event))
+			}
+
+			machines = append(machines, status)
 		}
 
-		// Get valid events
-		for _, event := range machine.GetValidEvents() {
-			status.ValidEvents = append(status.ValidEvents, string(event))
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(machines)
+		
+	case "POST":
+		// Create new FSM from design
+		var config struct {
+			Name         string `json:"name"`
+			InitialState string `json:"initial_state"`
+			States       []struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			} `json:"states"`
+			Events []struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			} `json:"events"`
+			Transitions []struct {
+				From   string `json:"from"`
+				To     string `json:"to"`
+				Event  string `json:"event"`
+				Action string `json:"action"`
+			} `json:"transitions"`
 		}
-
-		machines = append(machines, status)
+		
+		if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		
+		// Create FSM using builder
+		builder := fsm.NewBuilderWithHooks()
+		
+		// Add states
+		for _, state := range config.States {
+			builder.AddState(fsm.State(state.Name))
+		}
+		
+		// Add events  
+		for _, event := range config.Events {
+			builder.AddEvent(fsm.Event(event.Name))
+		}
+		
+		// Add transitions
+		for _, transition := range config.Transitions {
+			builder.AddTransitionWithAction(
+				fsm.State(transition.From),
+				fsm.Event(transition.Event),
+				fsm.State(transition.To),
+				func(from, to fsm.State, event fsm.Event, ctx fsm.Context) error {
+					fmt.Printf("Executing transition: %s -> %s on %s\n", 
+						transition.From, transition.To, transition.Event)
+					return nil
+				},
+			)
+		}
+		
+		// Set initial state and build machine
+		builder.SetInitialState(fsm.State(config.InitialState))
+		machine, err := builder.Build()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to build FSM: %v", err), http.StatusBadRequest)
+			return
+		}
+		
+		avs.RegisterMachine(config.Name, machine)
+		
+		// Return success response
+		response := map[string]interface{}{
+			"name": config.Name,
+			"status": "deployed",
+			"initial_state": config.InitialState,
+			"states_count": len(config.States),
+			"events_count": len(config.Events),
+			"transitions_count": len(config.Transitions),
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(machines)
 }
 
 // TransitionHistory represents historical transition data
@@ -613,8 +847,410 @@ type MachineStatus struct {
 
 // Placeholder handlers for other endpoints
 func (avs *AdvancedVisualizationServer) handleAnalyzer(w http.ResponseWriter, r *http.Request) {
+	tmpl := `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FSM Analytics Dashboard</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .header p {
+            margin: 0.5rem 0 0;
+            color: var(--muted);
+            font-size: 1.125rem;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .nav a:hover {
+            background: var(--card);
+            color: var(--primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.06);
+            border: 1px solid var(--border);
+        }
+        
+        .card h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .machine-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .machine-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .machine-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .machine-state {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: var(--success);
+            color: white;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .success { color: var(--success); }
+        .error { color: var(--error); }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: var(--primary-600);
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 FSM Analytics Dashboard</h1>
+        <p>Real-time performance metrics and insights</p>
+    </div>
+    
+    <div class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/designer">Visual Designer</a>
+        <a href="/analyzer" style="color: var(--primary);">Performance Analyzer</a>
+        <a href="/streaming">Event Streaming</a>
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h2>📈 Performance Metrics</h2>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="total-machines">0</div>
+                    <div class="metric-label">Total Machines</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="active-machines">0</div>
+                    <div class="metric-label">Active Machines</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="total-transitions">0</div>
+                    <div class="metric-label">Total Transitions</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="success-rate">100%</div>
+                    <div class="metric-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🎯 Current Machines</h2>
+            <div id="machine-list" class="machine-list">
+                <p class="metric-label">Loading machines...</p>
+            </div>
+            <button onclick="refreshMachines()">Refresh</button>
+        </div>
+        
+        <div class="card">
+            <h2>📊 State Distribution</h2>
+            <div id="state-chart" class="chart-container"></div>
+        </div>
+        
+        <div class="card">
+            <h2>🔄 Recent Transitions</h2>
+            <div id="transition-history" style="max-height: 250px; overflow-y: auto;">
+                <p class="metric-label">Loading transition history...</p>
+            </div>
+            <button onclick="refreshHistory()">Refresh History</button>
+        </div>
+    </div>
+
+    <script>
+        let machines = [];
+        let transitionHistory = [];
+        
+        function loadAnalytics() {
+            // Load machines
+            fetch('/api/machines')
+                .then(response => response.json())
+                .then(data => {
+                    machines = data;
+                    updateMachineMetrics();
+                    updateMachineList();
+                    updateStateChart();
+                })
+                .catch(error => console.error('Error loading machines:', error));
+            
+            // Load transition history from all machines
+            refreshHistory();
+        }
+        
+        function updateMachineMetrics() {
+            document.getElementById('total-machines').textContent = machines.length;
+            document.getElementById('active-machines').textContent = machines.filter(m => m.is_running).length;
+            
+            // Calculate total transitions from history
+            document.getElementById('total-transitions').textContent = transitionHistory.length;
+            
+            // Calculate success rate
+            const successful = transitionHistory.filter(t => t.success).length;
+            const rate = transitionHistory.length > 0 ? Math.round((successful / transitionHistory.length) * 100) : 100;
+            document.getElementById('success-rate').textContent = rate + '%';
+        }
+        
+        function updateMachineList() {
+            const container = document.getElementById('machine-list');
+            if (machines.length === 0) {
+                container.innerHTML = '<p class="metric-label">No machines found</p>';
+                return;
+            }
+            
+            container.innerHTML = machines.map(machine => 
+                '<div class="machine-item">' +
+                    '<div>' +
+                        '<div class="machine-name">' + machine.name + '</div>' +
+                        '<div class="metric-label">Events: ' + machine.valid_events.join(', ') + '</div>' +
+                    '</div>' +
+                    '<div class="machine-state">' + machine.current_state + '</div>' +
+                '</div>'
+            ).join('');
+        }
+        
+        function updateStateChart() {
+            // Count states
+            const stateCounts = {};
+            machines.forEach(machine => {
+                const state = machine.current_state;
+                stateCounts[state] = (stateCounts[state] || 0) + 1;
+            });
+            
+            // Simple bar chart using D3
+            const container = d3.select('#state-chart');
+            container.selectAll('*').remove();
+            
+            if (Object.keys(stateCounts).length === 0) {
+                container.append('p').text('No data to display').style('color', '#6b7280');
+                return;
+            }
+            
+            const data = Object.entries(stateCounts);
+            const maxCount = d3.max(data, d => d[1]);
+            
+            const svg = container.append('svg')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('viewBox', '0 0 400 250');
+            
+            const barHeight = 30;
+            const spacing = 10;
+            
+            svg.selectAll('rect')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', 80)
+                .attr('y', (d, i) => 20 + i * (barHeight + spacing))
+                .attr('width', d => (d[1] / maxCount) * 250)
+                .attr('height', barHeight)
+                .attr('fill', '#2563eb')
+                .attr('rx', 4);
+            
+            svg.selectAll('.label')
+                .data(data)
+                .enter()
+                .append('text')
+                .attr('class', 'label')
+                .attr('x', 75)
+                .attr('y', (d, i) => 20 + i * (barHeight + spacing) + barHeight/2 + 5)
+                .attr('text-anchor', 'end')
+                .style('font-size', '12px')
+                .style('fill', '#374151')
+                .text(d => d[0]);
+            
+            svg.selectAll('.count')
+                .data(data)
+                .enter()
+                .append('text')
+                .attr('class', 'count')
+                .attr('x', d => 85 + (d[1] / maxCount) * 250)
+                .attr('y', (d, i) => 20 + i * (barHeight + spacing) + barHeight/2 + 5)
+                .style('font-size', '12px')
+                .style('fill', 'white')
+                .text(d => d[1]);
+        }
+        
+        function refreshHistory() {
+            // Fetch history for all machines
+            const historyPromises = machines.map(machine => 
+                fetch('/api/machines/' + machine.name + '/history')
+                    .then(response => response.ok ? response.json() : [])
+                    .catch(() => [])
+            );
+            
+            Promise.all(historyPromises)
+                .then(histories => {
+                    transitionHistory = histories.flat()
+                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        .slice(0, 20); // Keep only recent 20
+                    
+                    updateTransitionHistory();
+                    updateMachineMetrics();
+                })
+                .catch(error => console.error('Error loading history:', error));
+        }
+        
+        function updateTransitionHistory() {
+            const container = document.getElementById('transition-history');
+            if (transitionHistory.length === 0) {
+                container.innerHTML = '<p class="metric-label">No transitions recorded yet</p>';
+                return;
+            }
+            
+            container.innerHTML = transitionHistory.map(t => {
+                const time = new Date(t.timestamp).toLocaleTimeString();
+                const statusClass = t.success ? 'success' : 'error';
+                return '<div class="history-item">' +
+                    '<span>' + t.from_state + ' → ' + t.to_state + ' (' + t.event + ')</span>' +
+                    '<span class="' + statusClass + '">' + time + '</span>' +
+                '</div>';
+            }).join('');
+        }
+        
+        function refreshMachines() {
+            loadAnalytics();
+        }
+        
+        // Load data on page load
+        loadAnalytics();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadAnalytics, 5000);
+    </script>
+</body>
+</html>`
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Performance Analyzer</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;margin:0;padding:24px;background:#f5f7fb;color:#1f2937}.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e5e7eb}</style></head><body><div class=\"card\"><h1>Performance Analyzer</h1><p>Analytics and performance metrics coming soon...</p></div></body></html>")
+	t, _ := template.New("analyzer").Parse(tmpl)
+	t.Execute(w, nil)
 }
 
 func (avs *AdvancedVisualizationServer) handleStreaming(w http.ResponseWriter, r *http.Request) {
@@ -623,8 +1259,118 @@ func (avs *AdvancedVisualizationServer) handleStreaming(w http.ResponseWriter, r
 }
 
 func (avs *AdvancedVisualizationServer) handleMachineAPI(w http.ResponseWriter, r *http.Request) {
-	// Handle individual machine operations
-	fmt.Fprintf(w, "Machine API endpoint")
+	// Extract machine name from URL path
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) < 4 {
+		http.Error(w, "Invalid URL path", http.StatusBadRequest)
+		return
+	}
+	machineName := pathParts[3]
+	
+	// Check if this is a history request
+	if len(pathParts) >= 5 && pathParts[4] == "history" {
+		avs.handleMachineHistoryAPI(w, r, machineName)
+		return
+	}
+	
+	avs.mu.Lock()
+	machine, exists := avs.machines[machineName]
+	avs.mu.Unlock()
+	
+	if !exists {
+		http.Error(w, "Machine not found", http.StatusNotFound)
+		return
+	}
+	
+	switch r.Method {
+	case "GET":
+		// Get machine status
+		status := MachineStatus{
+			Name:         machineName,
+			CurrentState: string(machine.CurrentState()),
+			IsRunning:    machine.IsRunning(),
+			ValidEvents:  make([]string, 0),
+			LastUpdate:   time.Now(),
+		}
+		
+		for _, event := range machine.GetValidEvents() {
+			status.ValidEvents = append(status.ValidEvents, string(event))
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(status)
+		
+	case "POST":
+		// Trigger event
+		var request struct {
+			Event string `json:"event"`
+		}
+		
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		
+		// Record transition attempt
+		fromState := string(machine.CurrentState())
+		
+		// Send event
+		result, err := machine.SendEvent(fsm.Event(request.Event))
+		
+		// Record result
+		toState := string(machine.CurrentState())
+		success := err == nil
+		
+		// Use result if available
+		if result != nil {
+			toState = string(result.ToState)
+		}
+		
+		avs.mu.Lock()
+		avs.history[machineName] = append(avs.history[machineName], TransitionHistory{
+			Timestamp:   time.Now(),
+			FromState:   fromState,
+			ToState:     toState,
+			Event:       request.Event,
+			Success:     success,
+			Error:       func() string { if err != nil { return err.Error() }; return "" }(),
+			ExecutionID: fmt.Sprintf("%s_%d", machineName, time.Now().UnixNano()),
+		})
+		avs.mu.Unlock()
+		
+		response := map[string]interface{}{
+			"machine": machineName,
+			"event": request.Event,
+			"from_state": fromState,
+			"to_state": toState,
+			"success": success,
+		}
+		
+		if err != nil {
+			response["error"] = err.Error()
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (avs *AdvancedVisualizationServer) handleMachineHistoryAPI(w http.ResponseWriter, r *http.Request, machineName string) {
+	avs.mu.RLock()
+	history, exists := avs.history[machineName]
+	avs.mu.RUnlock()
+	
+	if !exists {
+		// Return empty history if machine doesn't exist or has no history
+		history = make([]TransitionHistory, 0)
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(history)
 }
 
 func (avs *AdvancedVisualizationServer) handleDesignSessionAPI(w http.ResponseWriter, r *http.Request) {
@@ -639,15 +1385,10 @@ func (avs *AdvancedVisualizationServer) handleMetricsAPI(w http.ResponseWriter, 
 		AverageResponseTime:  0,
 		ErrorRate:            0.0,
 		StateDistribution:    make(map[string]int),
-		EventFrequency:       make(map[string]int),
-		LastUpdated:          time.Now(),
+		EventFrequency:       make(map[string]int), // Initialize empty event frequency map
+		LastUpdated:          time.Now(),           // Set current timestamp
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(metrics)
-}
-
-func (avs *AdvancedVisualizationServer) handleStreamingEventsAPI(w http.ResponseWriter, r *http.Request) {
-	// Handle streaming events API
-	fmt.Fprintf(w, "Streaming events API endpoint")
+	w.Header().Set("Content-Type", "application/json") // Set JSON response header
+	json.NewEncoder(w).Encode(metrics)                 // Send metrics as JSON response
 }

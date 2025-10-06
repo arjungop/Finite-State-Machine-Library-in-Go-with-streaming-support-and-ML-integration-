@@ -65,7 +65,7 @@ func (b *FSMBuilder) AddTransition(from State, event Event, to State) Builder {
 	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
 	b.machine.AddTransition(transition) // Add the transition rule to the state machine
-	return b                             // Return builder to enable method chaining
+	return b                            // Return builder to enable method chaining
 }
 
 // AddTransitionWithCondition adds a transition with a guard condition
@@ -84,7 +84,7 @@ func (b *FSMBuilder) AddTransitionWithCondition(from State, event Event, to Stat
 	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
 	b.machine.AddTransition(transition) // Add the conditional transition rule to the state machine
-	return b                             // Return builder to enable method chaining
+	return b                            // Return builder to enable method chaining
 }
 
 // AddTransitionWithAction adds a transition with an action
@@ -123,15 +123,15 @@ func (b *FSMBuilder) AddTransitionFull(from State, event Event, to State, condit
 	b.machine.AddEvent(event) // Ensure triggering event is registered in the FSM
 
 	b.machine.AddTransition(transition) // Add the full-featured transition rule to the state machine
-	return b                             // Return builder to enable method chaining
+	return b                            // Return builder to enable method chaining
 }
 
 // SetInitialState sets the initial state for the FSM
 // Specifies which state the finite state machine should start in when initialized
 func (b *FSMBuilder) SetInitialState(state State) Builder {
-	b.initialState = state           // Store the initial state for use during Build()
-	b.machine.AddState(state)        // Ensure the initial state is registered in the FSM
-	return b                         // Return builder to enable method chaining
+	b.initialState = state    // Store the initial state for use during Build()
+	b.machine.AddState(state) // Ensure the initial state is registered in the FSM
+	return b                  // Return builder to enable method chaining
 }
 
 // Build creates and validates the FSM, returning it ready for use
@@ -143,7 +143,7 @@ func (b *FSMBuilder) Build() (Machine, error) {
 	}
 
 	// Set initial state if specified
-	if b.initialState != "" {                                 // Check if initial state was configured
+	if b.initialState != "" { // Check if initial state was configured
 		if err := b.machine.Start(b.initialState); err != nil { // Start FSM in initial state
 			return nil, err // Return error if starting fails
 		}

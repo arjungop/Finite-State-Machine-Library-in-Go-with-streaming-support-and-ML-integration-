@@ -11,36 +11,36 @@ import (
 // StateMachine is the core implementation of the Machine interface
 // This struct contains all the data and logic needed for a functional FSM
 type StateMachine struct {
-	mu           sync.RWMutex             // Read-write mutex for thread-safe access to FSM state
-	currentState State                   // The state the machine is currently in
-	states       map[State]bool          // Set of all valid states (map used as set with bool values)
-	events       map[Event]bool          // Set of all valid events that can trigger transitions
-	transitions  map[string]Transition   // Map of transition rules, keyed by "from_state:event"
-	hooks        map[HookType][]Hook     // Map of hook functions organized by when they should execute
-	context      Context                 // Shared data store accessible during transitions
-	running      bool                    // Flag indicating whether the FSM is currently active
-	initialState State                   // The state this FSM should start in when initialized
+	mu           sync.RWMutex          // Read-write mutex for thread-safe access to FSM state
+	currentState State                 // The state the machine is currently in
+	states       map[State]bool        // Set of all valid states (map used as set with bool values)
+	events       map[Event]bool        // Set of all valid events that can trigger transitions
+	transitions  map[string]Transition // Map of transition rules, keyed by "from_state:event"
+	hooks        map[HookType][]Hook   // Map of hook functions organized by when they should execute
+	context      Context               // Shared data store accessible during transitions
+	running      bool                  // Flag indicating whether the FSM is currently active
+	initialState State                 // The state this FSM should start in when initialized
 }
 
 // NewStateMachine creates a new finite state machine
 // Factory function that returns a properly initialized StateMachine instance
 func NewStateMachine() *StateMachine {
 	return &StateMachine{
-		states:      make(map[State]bool),       // Initialize empty set of states
-		events:      make(map[Event]bool),       // Initialize empty set of events
+		states:      make(map[State]bool),        // Initialize empty set of states
+		events:      make(map[Event]bool),        // Initialize empty set of events
 		transitions: make(map[string]Transition), // Initialize empty map of transitions
-		hooks:       make(map[HookType][]Hook),  // Initialize empty map of hook collections
-		context:     NewContext(),               // Create new context instance for data sharing
-		running:     false,                      // FSM starts in stopped state
+		hooks:       make(map[HookType][]Hook),   // Initialize empty map of hook collections
+		context:     NewContext(),                // Create new context instance for data sharing
+		running:     false,                       // FSM starts in stopped state
 	}
 }
 
 // generateExecutionID creates a unique identifier for transition execution
 // Uses cryptographic random bytes to ensure uniqueness across all transitions
 func generateExecutionID() string {
-	bytes := make([]byte, 8)                // Create 8-byte array for random data
-	rand.Read(bytes)                        // Fill array with cryptographically secure random bytes
-	return fmt.Sprintf("%x", bytes)         // Convert bytes to hexadecimal string representation
+	bytes := make([]byte, 8)        // Create 8-byte array for random data
+	rand.Read(bytes)                // Fill array with cryptographically secure random bytes
+	return fmt.Sprintf("%x", bytes) // Convert bytes to hexadecimal string representation
 }
 
 // transitionKey creates a key for the transitions map

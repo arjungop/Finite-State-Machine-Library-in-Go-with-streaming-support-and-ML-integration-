@@ -2,10 +2,10 @@
 package main
 
 import (
-	"fmt"      // Standard library for formatted I/O operations
-	"log"      // Standard library for logging functionality
+	"fmt"       // Standard library for formatted I/O operations
+	"log"       // Standard library for logging functionality
 	"math/rand" // Standard library for random number generation
-	"time"     // Standard library for time operations and delays
+	"time"      // Standard library for time operations and delays
 
 	"github.com/fla/self-programming-ai/pkg/fsm" // Import the FSM framework
 )

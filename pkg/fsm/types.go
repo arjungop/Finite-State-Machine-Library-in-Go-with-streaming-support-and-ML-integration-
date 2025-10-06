@@ -2,8 +2,8 @@
 package fsm
 
 import (
-	"fmt"   // Standard library for string formatting and printing
-	"time"  // Standard library for time operations and timestamps
+	"fmt"  // Standard library for string formatting and printing
+	"time" // Standard library for time operations and timestamps
 )
 
 // State represents a state in the finite state machine
@@ -26,19 +26,19 @@ type TransitionAction func(from, to State, event Event, context Context) error
 // Context holds data that can be accessed during transitions
 // This interface provides a key-value store for sharing data between transitions
 type Context interface {
-	Get(key string) interface{}                // Retrieves a value by key from the context
-	Set(key string, value interface{})         // Stores a key-value pair in the context
-	GetAll() map[string]interface{}            // Returns all key-value pairs as a map
+	Get(key string) interface{}        // Retrieves a value by key from the context
+	Set(key string, value interface{}) // Stores a key-value pair in the context
+	GetAll() map[string]interface{}    // Returns all key-value pairs as a map
 }
 
 // Transition defines a state transition rule in the finite state machine
 // This struct encapsulates all information needed for a single transition
 type Transition struct {
-	From      State                           // The source state that the transition starts from
-	Event     Event                           // The event that triggers this transition
-	To        State                           // The destination state that the transition leads to
-	Condition TransitionCondition             // Optional guard condition that must be true for transition
-	Action    TransitionAction                // Optional action to execute when transition occurs
+	From      State               // The source state that the transition starts from
+	Event     Event               // The event that triggers this transition
+	To        State               // The destination state that the transition leads to
+	Condition TransitionCondition // Optional guard condition that must be true for transition
+	Action    TransitionAction    // Optional action to execute when transition occurs
 }
 
 // String returns a string representation of the transition for debugging and logging
@@ -50,13 +50,13 @@ func (t Transition) String() string {
 // TransitionResult contains the result of a transition attempt
 // This struct provides comprehensive information about what happened during a transition
 type TransitionResult struct {
-	Success     bool         // Indicates whether the transition completed successfully
-	FromState   State        // The state the machine was in before the transition
-	ToState     State        // The state the machine is in after the transition
-	Event       Event        // The event that triggered this transition attempt
-	Error       error        // Any error that occurred during the transition (nil if successful)
-	Timestamp   time.Time    // When the transition occurred for auditing and debugging
-	ExecutionID string       // Unique identifier for this transition execution
+	Success     bool      // Indicates whether the transition completed successfully
+	FromState   State     // The state the machine was in before the transition
+	ToState     State     // The state the machine is in after the transition
+	Event       Event     // The event that triggered this transition attempt
+	Error       error     // Any error that occurred during the transition (nil if successful)
+	Timestamp   time.Time // When the transition occurred for auditing and debugging
+	ExecutionID string    // Unique identifier for this transition execution
 }
 
 // Hook represents a callback function for FSM events
@@ -96,10 +96,10 @@ func (e FSMError) Error() string {
 // Used when an event is triggered from a state that has no valid transition for that event
 func NewInvalidTransitionError(from State, event Event) FSMError {
 	return FSMError{
-		Type:    "InvalidTransition",                                                          // Error classification
+		Type:    "InvalidTransition",                                                             // Error classification
 		Message: fmt.Sprintf("No valid transition from state '%s' with event '%s'", from, event), // Descriptive message
-		State:   from,                                                                         // Source state
-		Event:   event,                                                                        // Triggering event
+		State:   from,                                                                            // Source state
+		Event:   event,                                                                           // Triggering event
 	}
 }
 
@@ -109,9 +109,9 @@ func NewInvalidTransitionError(from State, event Event) FSMError {
 // Used during FSM validation when referencing undefined states
 func NewStateNotFoundError(state State) FSMError {
 	return FSMError{
-		Type:    "StateNotFound",                                                 // Error classification for missing states
-		Message: fmt.Sprintf("State '%s' is not defined in this FSM", state),   // Human-readable error message
-		State:   state,                                                          // The undefined state that caused the error
+		Type:    "StateNotFound",                                             // Error classification for missing states
+		Message: fmt.Sprintf("State '%s' is not defined in this FSM", state), // Human-readable error message
+		State:   state,                                                       // The undefined state that caused the error
 	}
 }
 
@@ -119,27 +119,27 @@ func NewStateNotFoundError(state State) FSMError {
 // This interface provides the complete API for interacting with finite state machines
 type Machine interface {
 	// State operations - methods for managing the current state of the machine
-	CurrentState() State            // Returns the current state the machine is in
-	SetState(state State) error     // Directly sets the machine to a specific state (bypassing transitions)
-	IsValidState(state State) bool  // Checks if a given state is defined in this FSM
+	CurrentState() State           // Returns the current state the machine is in
+	SetState(state State) error    // Directly sets the machine to a specific state (bypassing transitions)
+	IsValidState(state State) bool // Checks if a given state is defined in this FSM
 
 	// Event operations - methods for triggering and validating events
 	SendEvent(event Event) (*TransitionResult, error) // Triggers an event and attempts a state transition
-	CanTransition(event Event) bool                    // Checks if an event can trigger a transition from current state
-	GetValidEvents() []Event                           // Returns all events that are valid from the current state
+	CanTransition(event Event) bool                   // Checks if an event can trigger a transition from current state
+	GetValidEvents() []Event                          // Returns all events that are valid from the current state
 
 	// Transition operations - methods for managing the transition rules
-	AddTransition(transition Transition) error         // Adds a new transition rule to the FSM
-	RemoveTransition(from State, event Event) error    // Removes a specific transition rule
-	GetTransitions() []Transition                       // Returns all transition rules defined in the FSM
+	AddTransition(transition Transition) error      // Adds a new transition rule to the FSM
+	RemoveTransition(from State, event Event) error // Removes a specific transition rule
+	GetTransitions() []Transition                   // Returns all transition rules defined in the FSM
 
 	// Hook operations - methods for managing callback functions
-	AddHook(hookType HookType, hook Hook)  // Registers a callback function for specific FSM events
-	RemoveHook(hookType HookType)          // Unregisters callbacks for a specific hook type
+	AddHook(hookType HookType, hook Hook) // Registers a callback function for specific FSM events
+	RemoveHook(hookType HookType)         // Unregisters callbacks for a specific hook type
 
 	// Context operations - methods for managing shared data
-	GetContext() Context            // Returns the current context (shared data store)
-	SetContext(context Context)     // Replaces the current context with a new one
+	GetContext() Context        // Returns the current context (shared data store)
+	SetContext(context Context) // Replaces the current context with a new one
 
 	// Machine lifecycle - methods for controlling the FSM's operational state
 	Start(initialState State) error // Initializes the FSM and sets it to the starting state
@@ -148,22 +148,22 @@ type Machine interface {
 	IsRunning() bool                // Returns true if the FSM is currently active and can process events
 
 	// Validation - method for ensuring FSM integrity
-	Validate() error                // Checks if the FSM configuration is valid and consistent
+	Validate() error // Checks if the FSM configuration is valid and consistent
 }
 
 // Builder interface for fluent FSM construction
 // This interface provides a chainable API for building finite state machines
 type Builder interface {
-	AddState(state State) Builder                                                             // Adds a single state to the FSM being built
-	AddStates(states ...State) Builder                                                       // Adds multiple states in one call using variadic parameters
-	AddEvent(event Event) Builder                                                            // Adds a single event that can trigger transitions
-	AddEvents(events ...Event) Builder                                                       // Adds multiple events in one call using variadic parameters
-	AddTransition(from State, event Event, to State) Builder                                 // Adds a basic transition without conditions or actions
-	AddTransitionWithCondition(from State, event Event, to State, condition TransitionCondition) Builder // Adds a transition with a guard condition
-	AddTransitionWithAction(from State, event Event, to State, action TransitionAction) Builder           // Adds a transition with an action to execute
+	AddState(state State) Builder                                                                                        // Adds a single state to the FSM being built
+	AddStates(states ...State) Builder                                                                                   // Adds multiple states in one call using variadic parameters
+	AddEvent(event Event) Builder                                                                                        // Adds a single event that can trigger transitions
+	AddEvents(events ...Event) Builder                                                                                   // Adds multiple events in one call using variadic parameters
+	AddTransition(from State, event Event, to State) Builder                                                             // Adds a basic transition without conditions or actions
+	AddTransitionWithCondition(from State, event Event, to State, condition TransitionCondition) Builder                 // Adds a transition with a guard condition
+	AddTransitionWithAction(from State, event Event, to State, action TransitionAction) Builder                          // Adds a transition with an action to execute
 	AddTransitionFull(from State, event Event, to State, condition TransitionCondition, action TransitionAction) Builder // Adds a transition with both condition and action
-	SetInitialState(state State) Builder                                                     // Specifies which state the FSM should start in
-	Build() (Machine, error)                                                                 // Constructs the final FSM and returns it (or an error if invalid)
+	SetInitialState(state State) Builder                                                                                 // Specifies which state the FSM should start in
+	Build() (Machine, error)                                                                                             // Constructs the final FSM and returns it (or an error if invalid)
 }
 
 // ContextImpl provides a basic implementation of Context
